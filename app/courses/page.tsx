@@ -58,7 +58,7 @@ const cardVariants = {
     y: 0,
     scale: 1,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 200,
       damping: 20,
     },
@@ -414,7 +414,7 @@ export default function CoursesPage() {
   })
 
   // Get unique subjects for filter
-  const subjects = [...new Set(courses.map(c => c.subject))]
+  const subjects = Array.from(new Set(courses.map(c => c.subject)))
 
   // Loading State
   if (loading) {
