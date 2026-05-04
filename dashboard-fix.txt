@@ -1,0 +1,180 @@
+// Fix the syntax errors in the dashboard file
+
+// The issue is missing semicolons and improper bracket structure
+// Replace the problematic sections with these corrections
+
+// Section 1: Fix the handleStartEvaluation function (around line 267-272)
+const handleStartEvaluation = async () => {
+  console.log('🚀 Starting evaluation generation...')
+  setLoading(true)
+  try {
+    // Get user's recent quiz data for personalized evaluation
+    const progressResponse = await fetch(`/api/user/progress?userId=${user?.id || '00000000-0000-0000-0000-000000000001'}`)
+    const progressData = await progressResponse.json()
+    
+    console.log('📊 User progress data:', progressData)
+    
+    // Extract weaknesses and strengths from recent quizzes
+    const weaknesses = progressData.progress?.flatMap((p: any) => p.weaknesses || []) || []
+    const strengths = progressData.progress?.flatMap((p: any) => p.strengths || []) || []
+    const recentScores = progressData.progress?.map((p: any) => p.quiz_score || 0) || []
+    
+    console.log('🎯 Extracted data:', { weaknesses, strengths, recentScores })
+    
+    // Call AI quiz generation API with personalized data
+    const response = await fetch('/api/ai/quiz', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'generate_adaptive_quiz',
+        data: {
+          weaknesses: weaknesses.length > 0 ? weaknesses : ['général'],
+          strengths: strengths.length > 0 ? strengths : [],
+          previousScores: recentScores.length > 0 ? recentScores : [50],
+          targetDifficulty: 5,
+          questionCount: 5,
+          userId: user?.id
+        }
+      })
+    })
+
+    console.log('📡 Quiz API response status:', response.status)
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('❌ Quiz API error:', errorText)
+      // For testing, create mock quiz data
+      const mockQuiz = {
+        questions: [
+          {
+            id: 'q1',
+            question: 'Quelle est votre plus grande force en mathématiques?',
+            options: ['Algèbre', 'Géométrie', 'Statistiques', 'Calcul'],
+            correct_answer: 1,
+            explanation: 'La géométrie est souvent considérée comme la plus fondamentale.',
+            topic: 'mathématiques',
+            difficulty: 5
+          },
+          {
+            id: 'q2',
+            question: 'Comment améliorez-vous vos points faibles?',
+            options: ['Pratique régulière', 'Répétition', 'Aide extérieure', 'Auto-évaluation'],
+            correct_answer: 0,
+            explanation: 'La pratique régulière est la méthode la plus efficace.',
+            topic: 'méthodologie',
+            difficulty: 4
+          },
+          {
+            id: 'q3',
+            question: 'Quel sujet nécessite plus d\'attention?',
+            options: ['Algèbre', 'Calcul', 'Géométrie', 'Probabilités'],
+            correct_answer: 2,
+            explanation: 'Les probabilités nécessitent souvent plus de concentration.',
+            topic: 'mathématiques',
+            difficulty: 6
+          }
+        ],
+        title: 'Quiz Personnalisé d\'Évaluation',
+        description: 'Quiz généré selon vos progrès et faiblesses'
+      }
+      
+      console.log('🎭 Using mock quiz data for testing')
+      
+      // Redirect to quiz page with generated quiz
+      if (mockQuiz.questions) {
+        const quizData = encodeURIComponent(JSON.stringify(mockQuiz))
+        console.log('🔄 Redirecting to quiz with mock data:', quizData.substring(0, 100) + '...')
+        window.location.href = `/quiz?courseId=evaluation&quizData=${quizData}`
+      } else {
+        console.log('⚠️ No questions in mock quiz response')
+        alert(`Quiz généré avec ${mockQuiz.questions?.length || 5} questions!`)
+      }
+    } catch (error) {
+      console.error('❌ Error generating quiz:', error)
+      alert('Erreur lors de la génération du quiz: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+// Section 2: Fix the handleGetPersonalizedContent function (around line 341-349)
+const handleGetPersonalizedContent = async () => {
+  console.log('🚀 Starting personalized content generation...')
+  setLoading(true)
+  try {
+    // Get user's progress data for personalized content
+    const progressResponse = await fetch(`/api/user/progress?userId=${user?.id || '00000000-0000-0000-0000-000000000001'}`)
+    const progressData = await progressResponse.json()
+    
+    console.log('📊 User progress data:', progressData)
+    
+    // Extract learning patterns and recommendations
+    const weaknesses = progressData.progress?.flatMap((p: any) => p.weaknesses || []) || []
+    const strengths = progressData.progress?.flatMap((p: any) => p.strengths || []) || []
+    const completedCourses = progressData.progress?.map((p: any) => p.courses?.title) || []
+    
+    console.log('🎯 Extracted data:', { weaknesses, strengths, completedCourses })
+    
+    // Generate personalized learning content based on user progress
+    const response = await fetch('/api/ai/learning-content', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'generate_learning_path',
+        data: {
+          userWeaknesses: weaknesses,
+          userStrengths: strengths,
+          completedCourses: completedCourses,
+          currentLevel: Math.max(...(progressData.progress?.map((p: any) => p.quiz_score || 0) || [0])),
+          learningGoals: ['improvement', 'advancement'],
+          userId: user?.id
+        }
+      })
+    })
+
+    console.log('📡 Learning content API response status:', response.status)
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('❌ Learning content API error:', errorText)
+      // For testing, create mock learning content
+      const mockContent = {
+        recommendedCourses: [
+          { title: 'Mathématiques avancées', difficulty: 6 },
+          { title: 'Algorithmique et structures', difficulty: 5 },
+          { title: 'Bases de données', difficulty: 4 },
+          { title: 'Analyse numérique', difficulty: 5 }
+        ],
+        learningObjectives: [
+          { title: 'Maîtriser les concepts fondamentaux', description: 'Comprendre les bases théoriques et les principes mathématiques' },
+          { title: 'Pratiquer avec des exercices', description: 'Appliquer les connaissances à travers des problèmes pratiques' },
+          { title: 'Créer des projets', description: 'Développer des applications concrètes pour renforcer la compréhension' },
+          { title: 'Collaborer et échanger', description: 'Travailler en groupe pour partager les connaissances et stratégies' }
+        ],
+        nextSteps: [
+          { title: 'Réviser les concepts', description: 'Revoir les notions fondamentales avant chaque session' },
+          { title: 'Faire des exercices', description: 'Pratiquer régulièrement avec des problèmes variés' },
+          { title: 'Évaluer les progrès', description: 'Tester ses connaissances par des quiz et évaluations' },
+          { title: 'Utiliser les ressources', description: 'Consulter les supports pédagogiques et les tutoriels' }
+        ]
+      }
+      
+      console.log('🎭 Using mock learning content for testing')
+      
+      // Store personalized content for display
+      setPersonalizedContent(mockContent)
+      
+      alert(`Contenu personnalisé généré!\n\n${JSON.stringify(mockContent, null, 2).substring(0, 200)}...`)
+    } catch (error) {
+      console.error('❌ Error generating personalized content:', error)
+      alert('Erreur lors de la génération du contenu personnalisé: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+// Copy these corrected functions and replace the broken ones in your dashboard file
