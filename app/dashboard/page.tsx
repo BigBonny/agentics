@@ -8,7 +8,7 @@ import { supabaseAdmin } from '../../lib/supabase'
 import {
   Sparkles, Crown, Star, TrendingUp, Clock, Award, Brain,
   Target, BookOpen, Zap, Lock, ArrowRight, CheckCircle,
-  BarChart3, GraduationCap, ChevronRight, Play, Flame, Plus
+  BarChart3, GraduationCap, ChevronRight, Flame, Plus
 } from 'lucide-react'
 import NewHeader from '../../components/NewHeader'
 import NewFooter from '../../components/NewFooter'
@@ -100,11 +100,10 @@ export default function Dashboard() {
           setUserData(existingUser)
         }
 
-        // Fetch courses
+        // Fetch courses (all courses including unpublished)
         const { data: coursesData } = await supabaseAdmin
           .from('courses')
           .select('*')
-          .eq('is_published', true)
         setCourses(coursesData || [])
       } catch (error) {
         console.error('Error:', error)
@@ -292,13 +291,6 @@ export default function Dashboard() {
                   Votre espace d'apprentissage personnalisé • Niveau: Intermédiaire
                 </p>
               </div>
-              <button
-                onClick={() => router.push('/quiz/guest')}
-                className="btn-premium flex items-center gap-2"
-              >
-                <Play className="h-5 w-5" />
-                <span>Nouveau Quiz</span>
-              </button>
             </div>
           </motion.div>
 
