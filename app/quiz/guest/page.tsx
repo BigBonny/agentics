@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { ArrowRight, CheckCircle, Clock, Award, Lock, Sparkles, Brain, Calculator, FlaskConical, BookOpen, Target, Zap, Crown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useUser } from '@clerk/nextjs'
 import NewHeader from '../../../components/NewHeader'
 import React from 'react'
 
 export default function GuestQuizPage() {
+  const { user, isSignedIn } = useUser()
   const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<Record<number, string>>({})
@@ -129,6 +131,11 @@ export default function GuestQuizPage() {
       if (response.ok) {
         setQuizResults(results)
         setShowResults(true)
+        
+        // Save to database if user is logged in
+        if (isSignedIn && user) {
+          await saveQuizToDatabase(results, answersArray)
+        }
       } else {
         console.error('Quiz submission failed:', results)
       }
@@ -136,6 +143,63 @@ export default function GuestQuizPage() {
       console.error('Error submitting quiz:', error)
     } finally {
       setLoading(false)
+    }
+  }
+  
+  const saveQuizToDatabase = async (results: any, answersArray: string[]) => {
+    try {
+      console.log('Saving quiz results to database...')
+      
+      // Get subject from selected quiz
+      const quizSubject = quizzes.find(q => q.id === selectedQuiz)?.title || 'General'
+      
+      // Format responses
+      const responses = sampleQuestions.map((q, i) => ({
+        question: q.question,
+        userAnswer: answersArray[i],
+        correctAnswer: q.options[q.correctAnswer],
+        isCorrect: answersArray[i] === q.options[q.correctAnswer]
+      }))
+      
+      // Calculate weaknesses and strengths
+      const weaknesses: string[] = []
+      const strengths: string[] = []
+      
+      responses.forEach((r, i) => {
+        if (r.isCorrect) {
+          strengths.push(`Question ${i + 1}`)
+        } else {
+          weaknesses.push(`Question ${i + 1}`)
+        }
+      })
+      
+      const saveResponse = await fetch('/api/evaluations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clerkId: user?.id,
+          subject: quizSubject,
+          score: results.score,
+          maxScore: results.totalQuestions,
+          responses,
+          feedback: {
+            overall: results.message,
+            weaknesses: weaknesses.slice(0, 3),
+            strengths: strengths.slice(0, 3),
+            recommendations: []
+          }
+        })
+      })
+      
+      if (saveResponse.ok) {
+        console.log('Quiz results saved to database successfully!')
+      } else {
+        console.error('Failed to save quiz results:', await saveResponse.text())
+      }
+    } catch (error) {
+      console.error('Error saving quiz to database:', error)
     }
   }
 
@@ -469,7 +533,7 @@ export default function GuestQuizPage() {
                   </span>
                   
                   <h3 className="text-2xl font-bold text-gray-900 mb-2 leading-relaxed">
-                    {sampleQuestions[currentQuestion].question}
+                    {sampleQuestions[currentQuestion]?.question || 'Question non disponible'}
                   </h3>
                   
                   <p className="text-gray-500">
@@ -479,7 +543,7 @@ export default function GuestQuizPage() {
 
                 {/* Options */}
                 <div className="space-y-4 mb-8">
-                  {sampleQuestions[currentQuestion].options.map((option, index) => {
+                  {sampleQuestions[currentQuestion]?.options?.map((option, index) => {
                     const isSelected = answers[currentQuestion] === option
                     const letters = ['A', 'B', 'C', 'D']
                     

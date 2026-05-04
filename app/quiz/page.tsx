@@ -200,27 +200,79 @@ export default function QuizPage() {
   const updateDashboard = async (result: QuizResult) => {
     try {
       console.log('Updating dashboard with result:', result)
-      const response = await fetch('/api/user/progress', {
+      
+      // 1. Save to progress table (existing)
+      const progressResponse = await fetch('/api/user/progress', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user?.id || 'test-user-id', // Use mock ID for testing
+          userId: user?.id,
           courseId,
           quizResult: result
         }),
       })
       
-      console.log('Progress API response status:', response.status)
+      console.log('Progress API response status:', progressResponse.status)
       
-      if (!response.ok) {
-        const errorData = await response.json()
+      // 2. Save to evaluations table for account page display
+      if (user?.id && course) {
+        const evalResponse = await fetch('/api/evaluations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            clerkId: user.id,
+            subject: course.subject || course.title,
+            score: result.score,
+            maxScore: result.total_questions,
+            responses: quizQuestions.map((q, i) => ({
+              question: q.question,
+              userAnswer: q.options[selectedAnswers[i]] || 'Non répondu',
+              correctAnswer: q.options[q.correct_answer],
+              isCorrect: selectedAnswers[i] === q.correct_answer
+            })),
+            feedback: {
+              overall: result.feedback,
+              weaknesses: result.weaknesses.slice(0, 3),
+              strengths: result.strengths.slice(0, 3),
+              recommendations: result.recommended_courses
+            }
+          }),
+        })
+        
+        if (evalResponse.ok) {
+          console.log('Evaluation saved successfully!')
+        } else {
+          console.error('Failed to save evaluation:', await evalResponse.text())
+        }
+      }
+      
+      // 3. Enroll user in course if passed (>= 70%)
+      if (user?.id && result.percentage >= 70 && courseId) {
+        const enrollResponse = await fetch(`/api/courses/${courseId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        })
+        
+        if (enrollResponse.ok) {
+          console.log('User enrolled in course successfully!')
+        } else {
+          console.log('Enrollment response:', await enrollResponse.text())
+        }
+      }
+      
+      if (!progressResponse.ok) {
+        const errorData = await progressResponse.json()
         console.error('Failed to update dashboard:', errorData)
         return
       }
       
-      const responseData = await response.json()
+      const responseData = await progressResponse.json()
       console.log('Dashboard updated successfully:', responseData)
       
     } catch (error) {

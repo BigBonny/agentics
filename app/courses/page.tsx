@@ -20,7 +20,6 @@ import {
 } from 'lucide-react'
 import NewHeader from '../../components/NewHeader'
 import NewFooter from '../../components/NewFooter'
-import CourseUpload from '../../components/CourseUpload'
 
 interface Course {
   id: string
@@ -378,7 +377,6 @@ export default function CoursesPage() {
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null)
-  const [showUploadModal, setShowUploadModal] = useState(false)
 
   // YOUR ORIGINAL BACKEND LOGIC - UNCHANGED
   useEffect(() => {
@@ -563,18 +561,6 @@ export default function CoursesPage() {
               ))}
             </div>
             
-            {/* Upload Button */}
-            {isSignedIn && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowUploadModal(true)}
-                className="px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-medium transition-colors flex items-center gap-2 shadow-lg hover:shadow-violet-500/25"
-              >
-                <Plus className="w-4 h-4" />
-                Téléverser
-              </motion.button>
-            )}
           </motion.div>
         </div>
       </div>
@@ -616,17 +602,6 @@ export default function CoursesPage() {
           <EmptyState />
         )}
       </main>
-
-      {/* Upload Modal */}
-      {showUploadModal && (
-        <CourseUpload
-          onUploadComplete={(course) => {
-            setShowUploadModal(false)
-            fetchCourses()
-          }}
-          onCancel={() => setShowUploadModal(false)}
-        />
-      )}
 
       <NewFooter />
     </div>

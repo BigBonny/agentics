@@ -19,9 +19,6 @@ import {
   Save,
   X,
   Sparkles,
-  Shield,
-  Bell,
-  Settings,
   LogOut,
   BarChart3,
   Clock,
@@ -51,52 +48,52 @@ export default function AccountPage() {
   const { user, isSignedIn, isLoaded } = useUser()
   const { signOut } = useClerk()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'settings'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'stats'>('overview')
   const [isEditing, setIsEditing] = useState(false)
   const [displayName, setDisplayName] = useState('')
   const [isSaving, setIsSaving] = useState(false)
-
-  const [stats] = useState<UserStats>({
-    quizzesTaken: 12,
-    coursesEnrolled: 5,
-    totalPoints: 2450,
-    streakDays: 7,
-    lastActive: '2026-05-03',
-    averageScore: 78
+  const [stats, setStats] = useState<UserStats>({
+    quizzesTaken: 0,
+    coursesEnrolled: 0,
+    totalPoints: 0,
+    streakDays: 0,
+    lastActive: '-',
+    averageScore: 0
   })
+  const [loading, setLoading] = useState(true)
 
-  const badges: Badge[] = [
+  const getBadges = (stats: UserStats): Badge[] => [
     {
       id: 'first_quiz',
       name: 'Premier Quiz',
       description: 'A complété son premier quiz',
       icon: <Target className="w-6 h-6" />,
-      earned: true,
-      earnedDate: '2026-04-15'
+      earned: stats.quizzesTaken >= 1,
+      earnedDate: stats.lastActive !== '-' ? stats.lastActive : undefined
     },
     {
-      id: 'streak_7',
+      id: 'streak_3',
       name: 'En Feu',
-      description: '7 jours de suite actif',
+      description: '3 quizzes complétés',
       icon: <Flame className="w-6 h-6" />,
-      earned: true,
-      earnedDate: '2026-05-01'
+      earned: stats.quizzesTaken >= 3,
+      earnedDate: stats.lastActive !== '-' ? stats.lastActive : undefined
     },
     {
       id: 'score_master',
       name: 'Maître du Score',
       description: 'Score moyen supérieur à 75%',
       icon: <Award className="w-6 h-6" />,
-      earned: true,
-      earnedDate: '2026-04-20'
+      earned: stats.averageScore >= 75,
+      earnedDate: stats.lastActive !== '-' ? stats.lastActive : undefined
     },
     {
-      id: 'course_explorer',
-      name: 'Explorateur',
-      description: 'A rejoint 5 cours différents',
-      icon: <BookOpen className="w-6 h-6" />,
-      earned: true,
-      earnedDate: '2026-04-25'
+      id: 'quiz_warrior',
+      name: 'Guerrier des Quiz',
+      description: '10 quizzes complétés',
+      icon: <Zap className="w-6 h-6" />,
+      earned: stats.quizzesTaken >= 10,
+      earnedDate: stats.lastActive !== '-' ? stats.lastActive : undefined
     }
   ]
 
@@ -107,8 +104,60 @@ export default function AccountPage() {
     }
     if (user) {
       setDisplayName(user.firstName || user.username || '')
+      fetchUserStats(user.id)
     }
-  }, [user, isSignedIn, isLoaded, router])
+  }, [isLoaded, isSignedIn, user, router])
+
+  const fetchUserStats = async (clerkId: string) => {
+    try {
+      setLoading(true)
+      
+      // Fetch evaluations
+      const evalResponse = await fetch(`/api/evaluations?userId=${clerkId}`)
+      const evalData = await evalResponse.json()
+      
+      // Fetch course enrollments
+      const enrollResponse = await fetch(`/api/progress?userId=${clerkId}`)
+      const enrollData = await enrollResponse.json()
+      
+      const coursesEnrolled = enrollData?.length || 0
+      
+      if (evalData.evaluations) {
+        const evaluations = evalData.evaluations
+        const totalQuizzes = evaluations.length
+        const averageScore = totalQuizzes > 0
+          ? Math.round(evaluations.reduce((sum: number, e: any) => sum + (e.score / e.max_score * 100), 0) / totalQuizzes)
+          : 0
+        
+        const totalPoints = evaluations.reduce((sum: number, e: any) => sum + (e.score * 10), 0)
+        
+        const lastActive = totalQuizzes > 0 
+          ? new Date(evaluations[0].created_at).toLocaleDateString('fr-FR')
+          : coursesEnrolled > 0 && enrollData[0]?.last_accessed_at
+            ? new Date(enrollData[0].last_accessed_at).toLocaleDateString('fr-FR')
+            : '-'
+        
+        setStats({
+          quizzesTaken: totalQuizzes,
+          coursesEnrolled,
+          totalPoints,
+          streakDays: Math.min(totalQuizzes, 7),
+          lastActive,
+          averageScore
+        })
+      } else {
+        // If no evaluations, show enrollment stats
+        setStats(prev => ({
+          ...prev,
+          coursesEnrolled
+        }))
+      }
+    } catch (error) {
+      console.error('Error fetching user stats:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSaveProfile = async () => {
     setIsSaving(true)
@@ -275,7 +324,7 @@ export default function AccountPage() {
                 </div>
 
                 <div className="space-y-3 sm:space-y-4">
-                  {badges.map((badge, index) => (
+                  {getBadges(stats).map((badge, index) => (
                     <motion.div
                       key={badge.id}
                       initial={{ opacity: 0, x: -10 }}
@@ -321,8 +370,7 @@ export default function AccountPage() {
               <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 p-1 flex gap-1 overflow-x-auto">
                 {[
                   { id: 'overview', label: 'Vue d\'ensemble', shortLabel: 'Aperçu', icon: <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" /> },
-                  { id: 'stats', label: 'Statistiques', shortLabel: 'Stats', icon: <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" /> },
-                  { id: 'settings', label: 'Paramètres', shortLabel: 'Réglages', icon: <Settings className="w-3 h-3 sm:w-4 sm:h-4" /> }
+                  { id: 'stats', label: 'Statistiques', shortLabel: 'Stats', icon: <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" /> }
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -422,63 +470,6 @@ export default function AccountPage() {
                   </motion.div>
                 )}
 
-                {activeTab === 'settings' && (
-                  <motion.div
-                    key="settings"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-4 sm:p-6 space-y-4 sm:space-y-6"
-                  >
-                    <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center">
-                        <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                      </div>
-                      <h2 className="text-lg sm:text-xl font-bold text-gray-900">Paramètres</h2>
-                    </div>
-
-                    <div className="space-y-3 sm:space-y-4">
-                      <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl sm:rounded-2xl gap-2">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                          <div>
-                            <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Notifications</h4>
-                            <p className="text-xs sm:text-sm text-gray-500">Recevoir des alertes email</p>
-                          </div>
-                        </div>
-                        <div className="w-10 sm:w-12 h-5 sm:h-6 bg-violet-600 rounded-full relative flex-shrink-0">
-                          <div className="absolute right-0.5 sm:right-1 top-0.5 sm:top-1 w-3.5 sm:w-4 h-3.5 sm:h-4 bg-white rounded-full" />
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl sm:rounded-2xl gap-2">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                          <div>
-                            <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Sécurité</h4>
-                            <p className="text-xs sm:text-sm text-gray-500">Authentification à deux facteurs</p>
-                          </div>
-                        </div>
-                        <button className="px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-700 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium hover:bg-gray-300 transition-colors flex-shrink-0">
-                          Configurer
-                        </button>
-                      </div>
-
-                      <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl sm:rounded-2xl gap-2">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-                          <div>
-                            <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Profil Public</h4>
-                            <p className="text-xs sm:text-sm text-gray-500">Rendre votre profil visible</p>
-                          </div>
-                        </div>
-                        <div className="w-10 sm:w-12 h-5 sm:h-6 bg-gray-300 rounded-full relative flex-shrink-0">
-                          <div className="absolute left-0.5 sm:left-1 top-0.5 sm:top-1 w-3.5 sm:w-4 h-3.5 sm:h-4 bg-white rounded-full" />
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
               </AnimatePresence>
             </div>
           </div>

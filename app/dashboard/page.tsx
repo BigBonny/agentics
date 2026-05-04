@@ -13,24 +13,6 @@ import {
 import NewHeader from '../../components/NewHeader'
 import NewFooter from '../../components/NewFooter'
 
-// Mock data for demonstration
-const mockProgress = [
-  { day: 'Lun', score: 65 },
-  { day: 'Mar', score: 72 },
-  { day: 'Mer', score: 68 },
-  { day: 'Jeu', score: 85 },
-  { day: 'Ven', score: 78 },
-  { day: 'Sam', score: 92 },
-  { day: 'Dim', score: 88 }
-]
-
-const mockAchievements = [
-  { icon: Star, name: 'Premier Quiz', desc: 'Complétez votre premier quiz', unlocked: true },
-  { icon: Flame, name: 'Série Gagnante', desc: '5 quizzes consécutifs', unlocked: true },
-  { icon: Target, name: 'Expert', desc: 'Scorez 90% ou plus', unlocked: false },
-  { icon: Crown, name: 'Champion', desc: '10 quizzes complétés', unlocked: false }
-]
-
 const premiumFeatures = [
   { icon: Brain, name: 'Quiz IA Illimités', desc: 'Accès à tous les quizzes intelligents', locked: false },
   { icon: Target, name: 'Analyse Avancée', desc: 'Détection précise des points faibles', locked: false },
@@ -48,6 +30,25 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [courses, setCourses] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'overview' | 'quiz' | 'progress' | 'achievements'>('overview')
+  
+  // Real user stats from database
+  const [userStats, setUserStats] = useState({
+    averageScore: 0,
+    totalQuizzes: 0,
+    studyTime: 0,
+    streak: 0,
+    weeklyProgress: [
+      { day: 'Lun', score: 0 },
+      { day: 'Mar', score: 0 },
+      { day: 'Mer', score: 0 },
+      { day: 'Jeu', score: 0 },
+      { day: 'Ven', score: 0 },
+      { day: 'Sam', score: 0 },
+      { day: 'Dim', score: 0 }
+    ],
+    weaknesses: [] as string[],
+    strengths: [] as string[]
+  })
 
   const isSuccess = searchParams.get('success') === 'true'
   const hasSubscription = userData?.subscription_tier === 'premium'
@@ -69,6 +70,7 @@ export default function Dashboard() {
         }
 
         // Create or fetch user
+        let userId: string | null = null
         const { data: existingUser } = await supabaseAdmin
           .from('users')
           .select('*')
@@ -89,6 +91,7 @@ export default function Dashboard() {
             .select()
             .single()
           setUserData(newUser)
+          userId = newUser?.id || null
         } else {
           if (isSuccess) {
             await supabaseAdmin
@@ -98,6 +101,7 @@ export default function Dashboard() {
             existingUser.subscription_tier = 'premium'
           }
           setUserData(existingUser)
+          userId = existingUser?.id || null
         }
 
         // Fetch courses (all courses including unpublished)
@@ -105,6 +109,16 @@ export default function Dashboard() {
           .from('courses')
           .select('*')
         setCourses(coursesData || [])
+        
+        // Fetch real user progress and stats
+        if (userId) {
+          await fetchUserStats(userId)
+        }
+        
+        // Fetch AI recommendations
+        if (user?.id) {
+          await fetchRecommendations()
+        }
       } catch (error) {
         console.error('Error:', error)
       } finally {
@@ -114,6 +128,103 @@ export default function Dashboard() {
 
     fetchUserData()
   }, [user, isSuccess])
+  
+  const fetchUserStats = async (userId: string) => {
+    try {
+      // Fetch evaluations (quiz results)
+      const { data: evaluations } = await supabaseAdmin
+        .from('evaluations')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+      
+      // Fetch progress data
+      const { data: progressData } = await supabaseAdmin
+        .from('progress')
+        .select('*')
+        .eq('user_id', userId)
+      
+      // Fetch study sessions
+      const { data: studySessions } = await supabaseAdmin
+        .from('study_sessions')
+        .select('*')
+        .eq('user_id', userId)
+      
+      // Calculate real stats
+      const totalQuizzes = evaluations?.length || 0
+      const averageScore = evaluations && evaluations.length > 0
+        ? Math.round(evaluations.reduce((sum: number, e: any) => sum + (e.score / e.max_score * 100), 0) / evaluations.length)
+        : 0
+      
+      const studyTime = studySessions?.reduce((sum: number, s: any) => sum + (s.duration || 0), 0) || 0
+      
+      // Extract weaknesses and strengths from progress data
+      const weaknesses: string[] = []
+      const strengths: string[] = []
+      
+      progressData?.forEach((p: any) => {
+        if (p.mastery_level < 50) {
+          weaknesses.push(p.topic)
+        } else if (p.mastery_level > 75) {
+          strengths.push(p.topic)
+        }
+      })
+      
+      // Calculate streak (simplified - count consecutive days with activity)
+      const streak = Math.min(totalQuizzes, 7) // Simplified for now
+      
+      // Generate weekly progress from evaluations
+      const weeklyProgress = [
+        { day: 'Lun', score: 0 },
+        { day: 'Mar', score: 0 },
+        { day: 'Mer', score: 0 },
+        { day: 'Jeu', score: 0 },
+        { day: 'Ven', score: 0 },
+        { day: 'Sam', score: 0 },
+        { day: 'Dim', score: 0 }
+      ]
+      
+      // Fill in actual scores from evaluations (last 7 quizzes)
+      evaluations?.slice(0, 7).forEach((e: any, index: number) => {
+        const dayIndex = 6 - index
+        if (dayIndex >= 0) {
+          weeklyProgress[dayIndex].score = Math.round((e.score / e.max_score) * 100)
+        }
+      })
+      
+      setUserStats({
+        averageScore,
+        totalQuizzes,
+        studyTime: Math.round(studyTime / 60), // Convert to hours
+        streak,
+        weeklyProgress,
+        weaknesses: Array.from(new Set(weaknesses)).slice(0, 5),
+        strengths: Array.from(new Set(strengths)).slice(0, 5)
+      })
+    } catch (error) {
+      console.error('Error fetching user stats:', error)
+    }
+  }
+  
+  const fetchRecommendations = async () => {
+    try {
+      const response = await fetch('/api/ai/recommendations')
+      if (response.ok) {
+        const data = await response.json()
+        console.log('AI Recommendations:', data)
+        // Update user stats with AI-generated weaknesses/strengths if available
+        if (data.weaknesses?.length > 0 || data.strengths?.length > 0) {
+          setUserStats(prev => ({
+            ...prev,
+            weaknesses: data.weaknesses || prev.weaknesses,
+            strengths: data.strengths || prev.strengths
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching recommendations:', error)
+    }
+  }
 
   if (loading) {
     return (
@@ -297,10 +408,10 @@ export default function Dashboard() {
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
-              { icon: TrendingUp, label: 'Score Moyen', value: '78%', color: 'from-violet-500 to-purple-500' },
-              { icon: Clock, label: 'Temps d\'Étude', value: '24h', color: 'from-cyan-500 to-blue-500' },
-              { icon: Award, label: 'Quizzes', value: '12', color: 'from-amber-500 to-orange-500' },
-              { icon: Flame, label: 'Série', value: '5 jours', color: 'from-rose-500 to-pink-500' }
+              { icon: TrendingUp, label: 'Score Moyen', value: `${userStats.averageScore}%`, color: 'from-violet-500 to-purple-500' },
+              { icon: Clock, label: 'Temps d\'Étude', value: `${userStats.studyTime}h`, color: 'from-cyan-500 to-blue-500' },
+              { icon: Award, label: 'Quizzes', value: userStats.totalQuizzes.toString(), color: 'from-amber-500 to-orange-500' },
+              { icon: Flame, label: 'Série', value: `${userStats.streak} jours`, color: 'from-rose-500 to-pink-500' }
             ].map((stat, i) => (
               <motion.div
                 key={i}
@@ -340,7 +451,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <div className="h-48 flex items-end justify-between gap-2">
-                  {mockProgress.map((day, i) => (
+                  {userStats.weeklyProgress.map((day, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center gap-2">
                       <div
                         className="w-full bg-gradient-to-t from-violet-500 to-purple-500 rounded-t-lg transition-all duration-500 hover:from-violet-400 hover:to-purple-400"
@@ -360,14 +471,18 @@ export default function Dashboard() {
                 className="grid md:grid-cols-2 gap-4"
               >
                 <div 
-                  onClick={() => router.push('/quiz/guest')}
+                  onClick={() => router.push(userStats.weaknesses.length > 0 ? `/quiz/guest?focus=${userStats.weaknesses[0]}` : '/quiz/guest')}
                   className="card-premium p-6 hover:shadow-xl transition-all cursor-pointer group"
                 >
                   <div className="w-12 h-12 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <Brain className="h-6 w-6 text-white" />
                   </div>
                   <h4 className="font-bold text-gray-900 mb-2">Quiz IA Adaptatif</h4>
-                  <p className="text-gray-600 text-sm mb-4">Générez un quiz personnalisé basé sur vos progrès</p>
+                  <p className="text-gray-600 text-sm mb-4">
+                    {userStats.weaknesses.length > 0 
+                      ? `Quiz ciblé sur: ${userStats.weaknesses[0]}` 
+                      : 'Générez un quiz personnalisé basé sur vos progrès'}
+                  </p>
                   <div className="flex items-center text-violet-600 font-medium group-hover:gap-2 transition-all">
                     <span>Commencer</span>
                     <ChevronRight className="h-4 w-4" />
@@ -382,13 +497,78 @@ export default function Dashboard() {
                     <Target className="h-6 w-6 text-white" />
                   </div>
                   <h4 className="font-bold text-gray-900 mb-2">Analyse des Faiblesses</h4>
-                  <p className="text-gray-600 text-sm mb-4">Identifiez vos points à améliorer</p>
+                  <p className="text-gray-600 text-sm mb-4">
+                    {userStats.weaknesses.length > 0 
+                      ? `${userStats.weaknesses.length} point${userStats.weaknesses.length > 1 ? 's' : ''} à améliorer identifié${userStats.weaknesses.length > 1 ? 's' : ''}` 
+                      : 'Identifiez vos points à améliorer'}
+                  </p>
                   <div className="flex items-center text-violet-600 font-medium group-hover:gap-2 transition-all">
-                    <span>Voir les cours</span>
+                    <span>Voir les cours recommandés</span>
                     <ChevronRight className="h-4 w-4" />
                   </div>
                 </div>
               </motion.div>
+
+              {/* Weakness Analysis Section */}
+              {userStats.weaknesses.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 }}
+                  className="card-glass p-6 border-l-4 border-rose-500"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <Target className="h-5 w-5 text-rose-500" />
+                      Points à Renforcer
+                    </h3>
+                    <span className="text-sm text-rose-600 font-medium">{userStats.weaknesses.length} identifiés</span>
+                  </div>
+                  <div className="space-y-3">
+                    {userStats.weaknesses.map((weakness, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 bg-rose-50 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-rose-200 flex items-center justify-center">
+                            <span className="text-rose-700 font-bold text-sm">{i + 1}</span>
+                          </div>
+                          <span className="font-medium text-gray-900">{weakness}</span>
+                        </div>
+                        <button 
+                          onClick={() => router.push(`/quiz/guest?focus=${encodeURIComponent(weakness)}`)}
+                          className="text-sm text-rose-600 hover:text-rose-700 font-medium"
+                        >
+                          S'entraîner →
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Strengths Section */}
+              {userStats.strengths.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.36 }}
+                  className="card-glass p-6 border-l-4 border-emerald-500"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-emerald-500" />
+                      Vos Points Forts
+                    </h3>
+                    <span className="text-sm text-emerald-600 font-medium">{userStats.strengths.length} identifiés</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {userStats.strengths.map((strength, i) => (
+                      <span key={i} className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+                        {strength}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Courses Section */}
               <motion.div
@@ -460,7 +640,32 @@ export default function Dashboard() {
                   Succès Débloqués
                 </h3>
                 <div className="space-y-4">
-                  {mockAchievements.map((achievement, i) => (
+                  {[
+                    { 
+                      icon: Star, 
+                      name: 'Premier Quiz', 
+                      desc: 'Complétez votre premier quiz', 
+                      unlocked: userStats.totalQuizzes >= 1 
+                    },
+                    { 
+                      icon: Flame, 
+                      name: 'Série Gagnante', 
+                      desc: '5 quizzes complétés', 
+                      unlocked: userStats.totalQuizzes >= 5 
+                    },
+                    { 
+                      icon: Target, 
+                      name: 'Expert', 
+                      desc: 'Scorez 90% ou plus', 
+                      unlocked: userStats.averageScore >= 90 
+                    },
+                    { 
+                      icon: Crown, 
+                      name: 'Champion', 
+                      desc: '10 quizzes complétés', 
+                      unlocked: userStats.totalQuizzes >= 10 
+                    }
+                  ].map((achievement, i) => (
                     <div
                       key={i}
                       className={`flex items-center gap-3 p-3 rounded-xl ${
@@ -500,7 +705,7 @@ export default function Dashboard() {
                   Série d'Étude
                 </h3>
                 <div className="text-center py-4">
-                  <div className="text-5xl font-bold gradient-text mb-2">5</div>
+                  <div className="text-5xl font-bold gradient-text mb-2">{userStats.streak}</div>
                   <p className="text-gray-600">Jours consécutifs</p>
                 </div>
                 <div className="flex justify-center gap-2 mt-4">
@@ -508,12 +713,12 @@ export default function Dashboard() {
                     <div
                       key={day}
                       className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
-                        day <= 5
+                        day <= userStats.streak
                           ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white'
                           : 'bg-gray-100 text-gray-400'
                       }`}
                     >
-                      {day <= 5 ? <CheckCircle className="h-4 w-4" /> : day}
+                      {day <= userStats.streak ? <CheckCircle className="h-4 w-4" /> : day}
                     </div>
                   ))}
                 </div>
