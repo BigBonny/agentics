@@ -325,7 +325,7 @@ export default function Dashboard() {
                 <Crown className="h-16 w-16 text-amber-400 mx-auto mb-6" />
                 <h2 className="text-3xl font-bold text-white mb-4">Passez à Premium Aujourd'hui</h2>
                 <p className="text-white/80 mb-8 max-w-xl mx-auto">
-                  Rejoignez plus de 10,000 étudiants qui ont déjà amélioré leurs résultats avec nos fonctionnalités premium.
+                  Accédez à toutes les fonctionnalités premium et optimisez votre apprentissage avec nos outils IA avancés.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <button

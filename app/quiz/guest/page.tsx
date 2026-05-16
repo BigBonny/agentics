@@ -249,7 +249,7 @@ export default function GuestQuizPage() {
             <div className="flex flex-wrap justify-center gap-6 mt-8">
               <div className="flex items-center gap-2 text-gray-600 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm">
                 <Target className="h-5 w-5 text-blue-500" />
-                <span className="font-medium">+10,000 évaluations</span>
+                <span className="font-medium">Évaluation gratuite</span>
               </div>
               <div className="flex items-center gap-2 text-gray-600 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm">
                 <Zap className="h-5 w-5 text-yellow-500" />

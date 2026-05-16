@@ -36,6 +36,25 @@ interface Course {
   created_at: string
   updated_at: string
   created_by: string
+  diploma?: string
+  chapters?: string[]
+}
+
+// Diploma levels hierarchy
+const diplomaLevels = [
+  { level: 1, name: 'Collège', range: '6ème - 3ème', color: 'bg-blue-500' },
+  { level: 2, name: 'Lycée', range: 'Seconde - Terminale', color: 'bg-emerald-500' },
+  { level: 3, name: 'Bac+1', range: 'Licence 1ère année', color: 'bg-amber-500' },
+  { level: 4, name: 'Bac+2', range: 'Licence 2ème/3ème année', color: 'bg-orange-500' },
+  { level: 5, name: 'Master', range: 'Master 1ère/2ème année', color: 'bg-purple-500' },
+]
+
+// Helper function to determine diploma from level
+const getDiplomaFromLevel = (level: number): string => {
+  if (level <= 3) return 'Collège'
+  if (level <= 6) return 'Lycée'
+  if (level <= 8) return 'Licence'
+  return 'Master'
 }
 
 // Animation variants for staggered grid
@@ -165,7 +184,7 @@ const CourseCard = ({ course, index }: { course: Course; index: number }) => {
         `} />
 
         <div className="relative p-6 flex flex-col h-full">
-          {/* Header: Subject & Level */}
+          {/* Header: Diploma & Subject */}
           <div className="flex items-center justify-between mb-4">
             <motion.span 
               whileHover={{ scale: 1.05 }}
@@ -174,12 +193,11 @@ const CourseCard = ({ course, index }: { course: Course; index: number }) => {
                 ${colors.bg} ${colors.text} border ${colors.border}
               `}
             >
-              
               {course.subject}
             </motion.span>
-            <div className="flex items-center gap-1 text-slate-400 text-sm">
-              <BarChart3 className="w-4 h-4" />
-              <span>Niveau {course.level}</span>
+            <div className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-violet-100 to-purple-100 text-violet-700 border border-violet-200">
+              <GraduationCap className="w-3 h-3" />
+              <span>{getDiplomaFromLevel(course.level)}</span>
             </div>
           </div>
 
@@ -205,25 +223,31 @@ const CourseCard = ({ course, index }: { course: Course; index: number }) => {
             </div>
           </div>
 
-          {/* Topics Pills */}
+          {/* Chapters Section */}
           {course.topics && course.topics.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-6">
-              {course.topics.slice(0, 3).map((topic, i) => (
-                <motion.span
-                  key={i}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 * i }}
-                  className="px-2.5 py-1 bg-gray-50 text-gray-700 text-xs rounded-md border border-gray-200 hover:border-gray-300 transition-colors"
-                >
-                  {topic}
-                </motion.span>
-              ))}
-              {course.topics.length > 3 && (
-                <span className="px-2.5 py-1 text-gray-500 text-xs">
-                  +{course.topics.length - 3}
-                </span>
-              )}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-2">
+                <BookOpen className="w-3 h-3" />
+                <span>{course.topics.length} Chapitre{course.topics.length > 1 ? 's' : ''}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {course.topics.slice(0, 3).map((topic, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 * i }}
+                    className="px-2.5 py-1 bg-violet-50 text-violet-700 text-xs rounded-md border border-violet-200 hover:border-violet-300 transition-colors"
+                  >
+                    {topic}
+                  </motion.span>
+                ))}
+                {course.topics.length > 3 && (
+                  <span className="px-2.5 py-1 text-violet-500 text-xs">
+                    +{course.topics.length - 3} plus
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
@@ -504,11 +528,12 @@ export default function CoursesPage() {
             className="text-center mb-12"
           >
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="text-gray-900">Découvrez nos </span>
-              <span className="gradient-text">cours</span>
+              <span className="text-gray-900">Formations par </span>
+              <span className="gradient-text">diplôme</span>
             </h1>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Explorez notre bibliothèque de cours interactifs et améliorez vos compétences.
+              Explorez notre hiérarchie de cours : Diplôme → Matières → Chapitres. 
+              Sélectionnez votre niveau pour découvrir les formations adaptées.
             </p>
           </motion.div>
 

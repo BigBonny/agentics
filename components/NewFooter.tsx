@@ -8,26 +8,24 @@ const footerLinks = {
   product: [
     { name: 'Quiz Gratuit', href: '/quiz/guest' },
     { name: 'Tarifs', href: '/pricing' },
-    { name: 'Fonctionnalités', href: '/#features' },
+    { name: 'Cours', href: '/courses' },
     { name: 'Tableau de Bord', href: '/dashboard' }
   ],
   company: [
-    { name: 'À Propos', href: '#' },
-    { name: 'Blog', href: '#' },
-    { name: 'Carrières', href: '#' },
-    { name: 'Contact', href: '#' }
+    { name: 'À Propos', href: '/' },
+    { name: 'Contact', href: 'mailto:contact@agentics.fr' }
   ],
   resources: [
-    { name: 'Centre d\'aide', href: '#' },
-    { name: 'Documentation', href: '#' },
-    { name: 'Mentions légales', href: '#' },
-    { name: 'Confidentialité', href: '#' }
+    { name: 'Centre d\'aide', href: '/dashboard' },
+    { name: 'Mon Compte', href: '/account' },
+    { name: 'Mentions légales', href: '/' },
+    { name: 'Confidentialité', href: '/' }
   ],
   social: [
-    { name: 'Facebook', icon: Facebook, href: '#' },
-    { name: 'Twitter', icon: Twitter, href: '#' },
-    { name: 'Instagram', icon: Instagram, href: '#' },
-    { name: 'LinkedIn', icon: Linkedin, href: '#' }
+    { name: 'Facebook', icon: Facebook, href: 'https://facebook.com' },
+    { name: 'Twitter', icon: Twitter, href: 'https://twitter.com' },
+    { name: 'Instagram', icon: Instagram, href: 'https://instagram.com' },
+    { name: 'LinkedIn', icon: Linkedin, href: 'https://linkedin.com' }
   ]
 }
 
@@ -42,7 +40,7 @@ export default function NewFooter() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h3 className="text-3xl font-bold mb-4">
-                Rejoignez <span className="gradient-text-gold">10,000+ étudiants</span>
+                Rejoignez <span className="gradient-text-gold">notre communauté</span>
               </h3>
               <p className="text-gray-400 text-lg">
                 Inscrivez-vous pour recevoir des conseils d'étude, des offres exclusives et des mises à jour sur nos nouvelles fonctionnalités.

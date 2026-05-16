@@ -341,7 +341,7 @@ export default function Pricing() {
               Prêt à Transformer Vos Résultats ?
             </h2>
             <p className="text-white/80 text-xl mb-8 max-w-2xl mx-auto">
-              Rejoignez plus de 10,000 étudiants qui ont déjà amélioré leurs notes avec notre plateforme IA.
+              Découvrez comment notre plateforme IA peut vous aider à améliorer vos résultats avec un apprentissage personnalisé.
             </p>
             <motion.button
               whileHover={{ scale: 1.05 }}

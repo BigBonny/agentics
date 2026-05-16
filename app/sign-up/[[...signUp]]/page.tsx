@@ -5,7 +5,7 @@ import { useUser } from '@clerk/nextjs'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Sparkles, ArrowLeft, Crown, Star, Zap } from 'lucide-react'
+import { Sparkles, ArrowLeft, Crown, Star, Zap, GraduationCap, Target } from 'lucide-react'
 
 export default function Page() {
   const { isSignedIn, isLoaded, user } = useUser()
@@ -68,7 +68,7 @@ export default function Page() {
             </div>
             
             <h2 className="text-4xl font-bold mb-6">
-              Rejoignez plus de 10,000 étudiants qui réussissent
+              Commencez votre parcours d'apprentissage
             </h2>
             <p className="text-white/80 text-lg mb-8">
               Créez votre compte gratuit et accédez immédiatement à nos quizzes intelligents et recommandations personnalisées.
@@ -76,9 +76,9 @@ export default function Page() {
 
             <div className="space-y-4">
               {[
-                { icon: Star, text: 'Essai gratuit de 30 jours' },
-                { icon: Zap, text: 'Accès immédiat aux quizzes' },
-                { icon: Crown, text: 'Recommandations personnalisées' }
+                { icon: GraduationCap, text: 'Cours adaptés à votre niveau et diplôme' },
+                { icon: Target, text: 'Quiz personnalisés selon votre filière' },
+                { icon: Zap, text: 'Accès immédiat à tous les chapitres' }
               ].map((benefit, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
@@ -102,6 +102,20 @@ export default function Page() {
           </div>
 
           <div className="w-full max-w-md">
+            {/* Level/Diploma Info */}
+            <div className="mb-6 p-4 bg-violet-50 border border-violet-200 rounded-xl">
+              <div className="flex items-start gap-3">
+                <GraduationCap className="w-5 h-5 text-violet-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-violet-900 text-sm">Configurez votre profil</h3>
+                  <p className="text-violet-700 text-xs mt-1">
+                    Après inscription, vous pourrez sélectionner votre niveau scolaire 
+                    (Collège, Lycée, Licence, Master) et votre filière pour accéder aux cours correspondants.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             <SignUp
               appearance={{
                 layout: {

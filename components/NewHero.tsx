@@ -51,7 +51,7 @@ export default function NewHero() {
             {/* Subheadline */}
             <p className="text-xl text-white/70 mb-8 max-w-lg">
               Des quiz intelligents, des recommandations personnalisées et un suivi de progrès complet. 
-              Rejoignez plus de <span className="text-amber-400 font-semibold">10,000 étudiants</span> qui réussissent avec nous.
+              Commencez votre parcours d'apprentissage dès maintenant.
             </p>
 
             {/* CTA Buttons */}
@@ -90,7 +90,7 @@ export default function NewHero() {
               </div>
               <div className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-yellow-400" />
-                <span className="text-sm">4.9/5 Évaluation</span>
+                <span className="text-sm">Évaluation Personnalisée</span>
               </div>
             </div>
           </motion.div>
@@ -191,10 +191,10 @@ export default function NewHero() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: '10,000+', label: 'Étudiants Actifs' },
-              { value: '50,000+', label: 'Quiz Complétés' },
-              { value: '95%', label: 'Taux de Réussite' },
-              { value: '4.9/5', label: 'Satisfaction' },
+              { value: 'Quiz IA', label: 'Adaptatifs' },
+              { value: 'Suivi', label: 'Personnalisé' },
+              { value: 'Apprentissage', label: 'Optimisé' },
+              { value: 'Résultats', label: 'Mesurables' },
             ].map((stat, i) => (
               <motion.div
                 key={i}
