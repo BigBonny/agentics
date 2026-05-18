@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Sparkles, Mail, MapPin, Phone, Facebook, Twitter, Instagram, Linkedin, Crown, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 const footerLinks = {
   product: [
@@ -16,10 +17,8 @@ const footerLinks = {
     { name: 'Contact', href: 'mailto:contact@agentics.fr' }
   ],
   resources: [
-    { name: 'Centre d\'aide', href: '/dashboard' },
     { name: 'Mon Compte', href: '/account' },
-    { name: 'Mentions légales', href: '/' },
-    { name: 'Confidentialité', href: '/' }
+    { name: 'Tableau de Bord', href: '/dashboard' }
   ],
   social: [
     { name: 'Facebook', icon: Facebook, href: 'https://facebook.com' },
@@ -85,6 +84,8 @@ export default function NewFooter() {
                 <motion.a
                   key={social.name}
                   href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-violet-600 transition-colors"
@@ -101,12 +102,12 @@ export default function NewFooter() {
             <ul className="space-y-3">
               {footerLinks.product.map((link) => (
                 <li key={link.name}>
-                  <button
-                    onClick={() => router.push(link.href)}
+                  <Link
+                    href={link.href}
                     className="text-gray-400 hover:text-violet-400 transition-colors"
                   >
                     {link.name}
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -117,12 +118,12 @@ export default function NewFooter() {
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
-                  <button
-                    onClick={() => router.push(link.href)}
+                  <a
+                    href={link.href}
                     className="text-gray-400 hover:text-violet-400 transition-colors"
                   >
                     {link.name}
-                  </button>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -133,12 +134,12 @@ export default function NewFooter() {
             <ul className="space-y-3">
               {footerLinks.resources.map((link) => (
                 <li key={link.name}>
-                  <button
-                    onClick={() => router.push(link.href)}
+                  <Link
+                    href={link.href}
                     className="text-gray-400 hover:text-violet-400 transition-colors"
                   >
                     {link.name}
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -172,15 +173,12 @@ export default function NewFooter() {
               © 2024 Agentics. Tous droits réservés.
             </p>
             <div className="flex items-center gap-6 text-sm">
-              <button className="text-gray-500 hover:text-violet-400 transition-colors">
-                Mentions légales
-              </button>
-              <button className="text-gray-500 hover:text-violet-400 transition-colors">
-                Politique de confidentialité
-              </button>
-              <button className="text-gray-500 hover:text-violet-400 transition-colors">
-                CGU
-              </button>
+              <Link href="/pricing" className="text-gray-500 hover:text-violet-400 transition-colors">
+                Tarifs
+              </Link>
+              <Link href="/courses" className="text-gray-500 hover:text-violet-400 transition-colors">
+                Cours
+              </Link>
             </div>
           </div>
         </div>
