@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { 
   BookOpen, 
@@ -40,6 +41,7 @@ interface Course {
 
 export default function CourseManagement() {
   const { isSignedIn } = useUser()
+  const router = useRouter()
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -110,6 +112,20 @@ export default function CourseManagement() {
       }
     } catch (error) {
       console.error('Error deleting courses:', error)
+    }
+  }
+
+  const deleteCourse = async (courseId: string) => {
+    if (!confirm('Supprimer ce cours ?')) return
+    try {
+      const response = await fetch('/api/courses/batch-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseIds: [courseId] })
+      })
+      if (response.ok) await fetchCourses()
+    } catch (error) {
+      console.error('Error deleting course:', error)
     }
   }
 
@@ -307,10 +323,16 @@ export default function CourseManagement() {
                         </div>
                         
                         <div className="flex space-x-1">
-                          <button className="text-indigo-600 hover:text-indigo-800 transition-colors">
+                          <button
+                            onClick={() => router.push(`/courses`)}
+                            className="text-indigo-600 hover:text-indigo-800 transition-colors"
+                          >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button className="text-gray-600 hover:text-gray-800 transition-colors">
+                          <button
+                            onClick={() => router.push(`/admin/courses/${course.id}`)}
+                            className="text-gray-600 hover:text-gray-800 transition-colors"
+                          >
                             <Edit className="w-4 h-4" />
                           </button>
                         </div>
@@ -363,13 +385,22 @@ export default function CourseManagement() {
                     </div>
                     
                     <div className="flex space-x-2">
-                      <button className="text-indigo-600 hover:text-indigo-800 transition-colors">
+                      <button
+                        onClick={() => router.push(`/courses`)}
+                        className="text-indigo-600 hover:text-indigo-800 transition-colors"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="text-gray-600 hover:text-gray-800 transition-colors">
+                      <button
+                        onClick={() => router.push(`/admin/courses/${course.id}`)}
+                        className="text-gray-600 hover:text-gray-800 transition-colors"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="text-red-600 hover:text-red-800 transition-colors">
+                      <button
+                        onClick={() => deleteCourse(course.id)}
+                        className="text-red-600 hover:text-red-800 transition-colors"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
