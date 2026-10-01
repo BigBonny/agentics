@@ -225,6 +225,7 @@ export default function QuizPage() {
           },
           body: JSON.stringify({
             clerkId: user.id,
+            courseId,
             subject: course.subject || course.title,
             score: result.score,
             maxScore: result.total_questions,

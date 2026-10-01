@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getCurrentUser } from '@/lib/clerk'
+import { enqueueQualisoftSync, getQualisoftPassingScore } from '@/lib/qualisoft'
 
 export async function POST(request: NextRequest) {
   try {
-    const { clerkId, subject, score, maxScore, responses, feedback } = await request.json()
+    const { clerkId, subject, score, maxScore, responses, feedback, courseId } = await request.json()
 
     if (!clerkId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
@@ -60,6 +62,22 @@ export async function POST(request: NextRequest) {
     if (progressError) {
       console.error('Error updating progress:', progressError)
       // Don't fail the request if progress update fails
+    }
+
+    // Qualisoft : un quiz de cours réussi = formation complétée.
+    // Insertion training_records awaitée (rapide), envoi vers QualiSoft en fire-and-forget.
+    // Garde-fou : le clerkId du corps doit être celui de la session, sinon n'importe qui
+    // pourrait déclarer une formation pour un autre apprenant dans l'ERP.
+    if (courseId && maxScore > 0) {
+      const percentage = (score / maxScore) * 100
+      if (percentage >= getQualisoftPassingScore()) {
+        const sessionUser = await getCurrentUser()
+        if (sessionUser?.id === clerkId) {
+          await enqueueQualisoftSync({ userId, courseId, score: percentage })
+        } else {
+          console.warn('[Qualisoft] Complétion ignorée : session absente ou différente du clerkId fourni')
+        }
+      }
     }
 
     return NextResponse.json({ 

@@ -1,8 +1,12 @@
 # Manual bucket creation using Supabase REST API
 # Run this in PowerShell
 
-$SUPABASE_URL = "https://gepewyneclxpupymvsxv.supabase.co"
-$SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcGV3eW5lY2x4cHVweW12c3h2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzk4NTcwOSwiZXhwIjoyMDg5NTYxNzA5fQ.hvpvu9yBeZPvWB0qVmgnDhVhE6OZiM1flKz9L--lvMM"
+$SUPABASE_URL = $env:NEXT_PUBLIC_SUPABASE_URL
+$SERVICE_ROLE_KEY = $env:SUPABASE_SERVICE_ROLE_KEY
+if (-not $SUPABASE_URL -or -not $SERVICE_ROLE_KEY) {
+    Write-Host "Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars first (never commit the key)." -ForegroundColor Red
+    exit 1
+}
 
 Write-Host "🪣 Creating course-images bucket..." -ForegroundColor Green
 

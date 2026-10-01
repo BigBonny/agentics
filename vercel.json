@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/qualisoft/sync",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

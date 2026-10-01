@@ -32,7 +32,10 @@ export default authMiddleware({
     '/api/debug/simple',
     '/api/debug/all-progress',
     '/api/debug/manual-insert',
-    '/api/sync-user'
+    '/api/sync-user',
+    '/api/qualisoft/sync',
+    '/api/qualisoft/status',
+    '/api/qualisoft/mappings'
   ],
   ignoredRoutes: [
     '/api/webhooks/stripe',

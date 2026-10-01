@@ -3,8 +3,8 @@
 # Manual bucket creation using Supabase REST API
 # Run this in your terminal (requires curl)
 
-SUPABASE_URL="https://gepewyneclxpupymvsxv.supabase.co"
-SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcGV3eW5lY2x4cHVweW12c3h2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzk4NTcwOSwiZXhwIjoyMDg5NTYxNzA5fQ.hvpvu9yBeZPvWB0qVmgnDhVhE6OZiM1flKz9L--lvMM"
+SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL:?Set NEXT_PUBLIC_SUPABASE_URL}"
+SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:?Set SUPABASE_SERVICE_ROLE_KEY (never commit it)}"
 
 echo "🪣 Creating course-images bucket..."
 

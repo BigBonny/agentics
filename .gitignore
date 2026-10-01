@@ -66,3 +66,11 @@ next-env.d.ts
 *.pem
 .eslintcache
 .stylelintcache
+
+# Fichiers d'export/test locaux (non versionnés)
+claude/
+claude-project-export/
+claude-upload/
+agentics_*.zip
+*.code-workspace
+agentics-claude-project.zip

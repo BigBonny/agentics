@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="of_elearning_record_tree" model="ir.ui.view">
+        <field name="name">of.elearning.record.tree</field>
+        <field name="model">of.elearning.record</field>
+        <field name="arch" type="xml">
+            <list string="Formations remontées (Agentics)">
+                <field name="partner_id"/>
+                <field name="learner_email"/>
+                <field name="formation_code"/>
+                <field name="course_title"/>
+                <field name="score"/>
+                <field name="completed_at"/>
+                <field name="source"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="of_elearning_record_form" model="ir.ui.view">
+        <field name="name">of.elearning.record.form</field>
+        <field name="model">of.elearning.record</field>
+        <field name="arch" type="xml">
+            <form string="Formation remontée">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="learner_email"/>
+                            <field name="formation_code"/>
+                            <field name="course_title"/>
+                        </group>
+                        <group>
+                            <field name="score"/>
+                            <field name="completed_at"/>
+                            <field name="certificate_url" widget="url"/>
+                            <field name="external_ref" readonly="1"/>
+                            <field name="source" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="of_elearning_record_search" model="ir.ui.view">
+        <field name="name">of.elearning.record.search</field>
+        <field name="model">of.elearning.record</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher">
+                <field name="partner_id"/>
+                <field name="learner_email"/>
+                <field name="formation_code"/>
+                <field name="course_title"/>
+                <filter name="this_month" string="Ce mois"
+                        domain="[('completed_at', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Regrouper par">
+                    <filter name="group_partner" string="Apprenant" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_formation" string="Formation" context="{'group_by': 'formation_code'}"/>
+                    <filter name="group_month" string="Mois" context="{'group_by': 'completed_at:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_of_elearning_record" model="ir.actions.act_window">
+        <field name="name">Formations Agentics</field>
+        <field name="res_model">of.elearning.record</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="of_elearning_record_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Aucune formation remontée pour l'instant.
+            </p>
+            <p>
+                Les formations complétées sur Agentics apparaîtront ici
+                automatiquement une fois la synchronisation configurée.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_agentics_root"
+              name="Agentics"
+              sequence="55"
+              web_icon="agentics_elearning_sync,static/description/icon.png"/>
+
+    <menuitem id="menu_agentics_records"
+              name="Formations remontées"
+              parent="menu_agentics_root"
+              action="action_of_elearning_record"
+              sequence="10"/>
+
+</odoo>
