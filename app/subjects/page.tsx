@@ -7,11 +7,11 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
-  BookOpen,
   Loader2,
   AlertCircle,
   Play,
   Award,
+  Search,
 } from 'lucide-react'
 import NewHeader from '../../components/NewHeader'
 import NewFooter from '../../components/NewFooter'
@@ -61,6 +61,7 @@ export default function SubjectsPage() {
   const [error, setError] = useState('')
   const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(new Set())
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     fetch('/api/subjects')
@@ -75,6 +76,30 @@ export default function SubjectsPage() {
     next.has(id) ? next.delete(id) : next.add(id)
     setter(next)
   }
+
+  const q = searchQuery.trim().toLowerCase()
+  const chapterMatches = (ch: Chapter) =>
+    ch.title.toLowerCase().includes(q) ||
+    ch.courses.some((c) => c.title.toLowerCase().includes(q)) ||
+    ch.children.some((child) => child.title.toLowerCase().includes(q))
+  const filteredTree = !q
+    ? tree
+    : tree
+        .map((g) => ({
+          ...g,
+          subjects: g.subjects.filter(
+            (s) =>
+              s.name.toLowerCase().includes(q) ||
+              s.code?.toLowerCase().includes(q) ||
+              s.description?.toLowerCase().includes(q) ||
+              s.enseignant?.toLowerCase().includes(q) ||
+              s.chapters.some(chapterMatches)
+          ),
+        }))
+        .filter((g) => g.subjects.length > 0)
+  // Pendant la recherche, les résultats sont dépliés automatiquement
+  const isSubjectExpanded = (id: string) => (q ? true : expandedSubjects.has(id))
+  const isChapterExpanded = (id: string) => (q ? true : expandedChapters.has(id))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50">
@@ -97,6 +122,30 @@ export default function SubjectsPage() {
             </p>
           </motion.div>
 
+          {/* Recherche */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="max-w-2xl mx-auto mb-10"
+          >
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Rechercher une matière, un chapitre, un cours…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none text-gray-900 placeholder-gray-400 transition-shadow"
+              />
+            </div>
+            {q && (
+              <p className="text-sm text-gray-500 mt-3 text-center">
+                {filteredTree.reduce((n, g) => n + g.subjects.length, 0)} matière(s) trouvée(s)
+              </p>
+            )}
+          </motion.div>
+
           {loading && (
             <div className="flex flex-col items-center py-20">
               <Loader2 className="w-10 h-10 animate-spin text-violet-600 mb-4" />
@@ -111,15 +160,17 @@ export default function SubjectsPage() {
             </div>
           )}
 
-          {!loading && !error && tree.length === 0 && (
+          {!loading && !error && filteredTree.length === 0 && (
             <div className="text-center py-20">
               <GraduationCap className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Le catalogue est en cours de préparation.</p>
+              <p className="text-gray-500">
+                {q ? `Aucun résultat pour « ${searchQuery} ».` : 'Le catalogue est en cours de préparation.'}
+              </p>
             </div>
           )}
 
           <div className="space-y-10">
-            {tree.map((group) => (
+            {filteredTree.map((group) => (
               <section key={group.code}>
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
@@ -136,7 +187,7 @@ export default function SubjectsPage() {
 
                 <div className="grid gap-4">
                   {group.subjects.map((subject, i) => {
-                    const expanded = expandedSubjects.has(subject.id)
+                    const expanded = isSubjectExpanded(subject.id)
                     return (
                       <motion.div
                         key={subject.id}
@@ -203,7 +254,7 @@ export default function SubjectsPage() {
                                         onClick={() => toggle(expandedChapters, setExpandedChapters, chapter.id)}
                                         className="w-full flex items-center px-4 py-3 text-left hover:bg-gray-100/60 rounded-xl transition-colors"
                                       >
-                                        {expandedChapters.has(chapter.id) ? (
+                                        {isChapterExpanded(chapter.id) ? (
                                           <ChevronDown className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
                                         ) : (
                                           <ChevronRight className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
@@ -219,7 +270,7 @@ export default function SubjectsPage() {
                                         )}
                                       </button>
 
-                                      {expandedChapters.has(chapter.id) && (
+                                      {isChapterExpanded(chapter.id) && (
                                         <div className="px-4 pb-3 space-y-2">
                                           {chapter.objectifs && (
                                             <p className="text-xs text-gray-500 whitespace-pre-line">{chapter.objectifs}</p>

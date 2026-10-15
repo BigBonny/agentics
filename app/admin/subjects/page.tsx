@@ -22,6 +22,7 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
+  Search,
 } from 'lucide-react'
 import Header from '../../../components/Header'
 
@@ -100,6 +101,7 @@ export default function AdminSubjects() {
   const [addingChapterTo, setAddingChapterTo] = useState<string | null>(null)
   const [attachChapterId, setAttachChapterId] = useState<string | null>(null)
   const [showNewSubject, setShowNewSubject] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (isSignedIn) fetchTree()
@@ -208,6 +210,29 @@ export default function AdminSubjects() {
 
   const unlinkedCourses = allCourses.filter((c) => !c.chapter_id)
 
+  const q = searchQuery.trim().toLowerCase()
+  const chapterMatches = (ch: Chapter) =>
+    ch.title.toLowerCase().includes(q) ||
+    ch.courses.some((c) => c.title.toLowerCase().includes(q)) ||
+    ch.children?.some((child) => child.title.toLowerCase().includes(q))
+  const filteredTree = !q
+    ? tree
+    : tree
+        .map((g) => ({
+          ...g,
+          subjects: g.subjects.filter(
+            (s) =>
+              s.name.toLowerCase().includes(q) ||
+              s.code?.toLowerCase().includes(q) ||
+              s.description?.toLowerCase().includes(q) ||
+              s.enseignant?.toLowerCase().includes(q) ||
+              s.chapters.some(chapterMatches)
+          ),
+        }))
+        .filter((g) => g.subjects.length > 0)
+  const isSubjectExpanded = (id: string) => (q ? true : expandedSubjects.has(id))
+  const isChapterExpanded = (id: string) => (q ? true : expandedChapters.has(id))
+
   if (!isSignedIn) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -257,6 +282,20 @@ export default function AdminSubjects() {
           </div>
         </div>
 
+        {/* Recherche */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 mb-6">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Rechercher une matière, un chapitre, un cours…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm transition-colors"
+            />
+          </div>
+        </div>
+
         {notice && (
           <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 mb-6 text-sm">{notice}</div>
         )}
@@ -303,7 +342,7 @@ export default function AdminSubjects() {
           </div>
         ) : (
           <div className="space-y-8">
-            {tree.map((group) => (
+            {filteredTree.map((group) => (
               <section key={group.code}>
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center">
                   <span className="bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-lg mr-2">{group.code}</span>
@@ -313,7 +352,7 @@ export default function AdminSubjects() {
 
                 <div className="space-y-3">
                   {group.subjects.map((subject) => {
-                    const expanded = expandedSubjects.has(subject.id)
+                    const expanded = isSubjectExpanded(subject.id)
                     return (
                       <motion.div
                         key={subject.id}
@@ -386,7 +425,7 @@ export default function AdminSubjects() {
                                   <ChapterRow
                                     key={chapter.id}
                                     chapter={chapter}
-                                    expanded={expandedChapters.has(chapter.id)}
+                                    expanded={isChapterExpanded(chapter.id)}
                                     onToggle={() => toggle(expandedChapters, setExpandedChapters, chapter.id)}
                                     onEdit={() => setEditingChapter(chapter)}
                                     onDelete={() => deleteChapter(chapter)}
@@ -530,23 +569,42 @@ function ChapterRow({
         </div>
       )}
 
-      {attachOpen && (
-        <div className="border-t border-gray-100 p-3">
-          {candidates.length === 0 ? (
-            <p className="text-xs text-gray-400">Tous les cours sont déjà rattachés — ou aucun cours n'existe encore.</p>
-          ) : (
-            <div className="max-h-40 overflow-y-auto space-y-1">
-              {candidates.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => onPickCourse(c.id)}
-                  className="w-full text-left text-sm px-3 py-2 rounded-lg hover:bg-indigo-50 text-gray-700 flex items-center"
-                >
-                  <BookOpen className="w-3.5 h-3.5 mr-2 text-gray-400" /> {c.title}
-                </button>
-              ))}
-            </div>
-          )}
+      {attachOpen && <CoursePicker candidates={candidates} onPick={onPickCourse} />}
+    </div>
+  )
+}
+
+function CoursePicker({ candidates, onPick }: { candidates: Course[]; onPick: (id: string) => void }) {
+  const [query, setQuery] = useState('')
+  const filtered = candidates.filter((c) => c.title.toLowerCase().includes(query.toLowerCase()))
+
+  return (
+    <div className="border-t border-gray-100 p-3" onClick={(e) => e.stopPropagation()}>
+      <input
+        autoFocus
+        type="text"
+        placeholder="Rechercher un cours à rattacher…"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+      />
+      {filtered.length === 0 ? (
+        <p className="text-xs text-gray-400">
+          {candidates.length === 0
+            ? "Tous les cours sont déjà rattachés — ou aucun cours n'existe encore."
+            : 'Aucun cours ne correspond.'}
+        </p>
+      ) : (
+        <div className="max-h-40 overflow-y-auto space-y-1">
+          {filtered.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => onPick(c.id)}
+              className="w-full text-left text-sm px-3 py-2 rounded-lg hover:bg-indigo-50 text-gray-700 flex items-center"
+            >
+              <BookOpen className="w-3.5 h-3.5 mr-2 text-gray-400" /> {c.title}
+            </button>
+          ))}
         </div>
       )}
     </div>
