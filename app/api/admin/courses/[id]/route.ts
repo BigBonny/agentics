@@ -29,19 +29,32 @@ export async function GET(
 
     const { data: course, error } = await supabaseAdmin
       .from('courses')
-      .select('*, course_content (*)')
+      .select('*')
       .eq('id', params.id)
       .single()
 
-    if (error || !course) {
+    if (error?.code === 'PGRST116' || (!error && !course)) {
       return NextResponse.json({ error: 'Cours introuvable' }, { status: 404 })
     }
+    if (error) {
+      console.error('Admin course fetch error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
-    const chapters = ((course as any).course_content ?? []).sort(
-      (a: any, b: any) => (a.order_index ?? 0) - (b.order_index ?? 0)
-    )
+    const { data: content, error: contentError } = await supabaseAdmin
+      .from('course_content')
+      .select('*')
+      .eq('course_id', params.id)
+      .order('order_index', { ascending: true })
 
-    return NextResponse.json({ ...course, chapters })
+    if (contentError) {
+      console.error('Admin chapters fetch error:', contentError)
+      return NextResponse.json(
+        { ...course, chapters: [], chaptersError: contentError.message }
+      )
+    }
+
+    return NextResponse.json({ ...course, chapters: content ?? [] })
   } catch (error) {
     console.error('Admin course detail error:', error)
     return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 })

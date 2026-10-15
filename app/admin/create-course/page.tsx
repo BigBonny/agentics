@@ -101,7 +101,7 @@ export default function CreateCourse() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-24 pb-8">
         <button
           onClick={() => router.push('/admin/courses')}
           className="flex items-center text-sm text-gray-600 hover:text-indigo-600 mb-6 transition-colors"

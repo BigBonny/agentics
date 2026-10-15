@@ -156,7 +156,7 @@ export default function CourseEditor({ params }: { params: { id: string } }) {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 pt-24 pb-8">
         <button
           onClick={() => router.push('/admin/courses')}
           className="flex items-center text-sm text-gray-600 hover:text-indigo-600 mb-6"
