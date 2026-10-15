@@ -2,267 +2,396 @@
 
 import { useState } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import {
+  ArrowLeft,
+  BookOpen,
+  Upload,
+  CheckCircle2,
+  X,
+  Loader2,
+  Sparkles,
+  Layers,
+  ListChecks,
+} from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
 import Header from '../../../components/Header'
-import ScrollingHeader from '../../../components/ScrollingHeader'
+
+const SUBJECTS = [
+  'mathématiques',
+  'physique',
+  'chimie',
+  'biologie',
+  'informatique',
+  'français',
+  'histoire',
+  'géographie',
+  'économie',
+  'gestion',
+]
+
+const emptyForm = {
+  title: '',
+  description: '',
+  subject: 'mathématiques',
+  level: 5,
+  duration_hours: 10,
+  prerequisites: [] as string[],
+  learning_objectives: [] as string[],
+  topics: [] as string[],
+  difficulty: 5,
+  is_published: false,
+}
 
 export default function CreateCourse() {
   const { isSignedIn } = useUser()
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    subject: 'mathématiques',
-    level: 5,
-    duration_hours: 10,
-    prerequisites: [] as string[],
-    learning_objectives: [] as string[],
-    topics: [] as string[],
-    difficulty: 5,
-    is_published: false
-  })
+  const router = useRouter()
+  const [formData, setFormData] = useState(emptyForm)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [createdId, setCreatedId] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setMessage('')
+    setCreatedId(null)
 
     try {
       const response = await fetch('/api/courses', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
 
       if (response.ok) {
         const course = await response.json()
-        setMessage(`Cours "${course.title}" créé avec succès!`)
-        // Reset form
-        setFormData({
-          title: '',
-          description: '',
-          subject: 'mathématiques',
-          level: 5,
-          duration_hours: 10,
-          prerequisites: [],
-          learning_objectives: [],
-          topics: [],
-          difficulty: 5,
-          is_published: false
-        })
+        setMessage(`Cours "${course.title}" créé avec succès !`)
+        setCreatedId(course.id)
+        setFormData(emptyForm)
       } else {
         const error = await response.json()
-        setMessage(`Erreur: ${error.error}`)
+        setMessage(`Erreur : ${error.error}`)
       }
-    } catch (error) {
-      setMessage(`Erreur: ${error.message}`)
+    } catch (error: any) {
+      setMessage(`Erreur : ${error.message}`)
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleArrayInput = (field: 'prerequisites' | 'learning_objectives' | 'topics', value: string) => {
-    const items = value.split(',').map(item => item.trim()).filter(item => item)
-    setFormData(prev => ({ ...prev, [field]: items }))
   }
 
   if (!isSignedIn) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Connexion Requise</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Connexion requise</h1>
           <p className="text-gray-600 mb-6">Vous devez être connecté pour créer un cours.</p>
-          <Button href="/sign-in" variant="primary">
-            Se connecter
-          </Button>
+          <Button href="/sign-in" variant="primary">Se connecter</Button>
         </div>
       </div>
     )
   }
 
+  const inputClass =
+    'w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors text-sm'
+  const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5'
+
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 md:pt-16">
+    <div className="min-h-screen bg-gray-50">
       <Header />
-      <ScrollingHeader />
-      
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow p-6 md:p-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Créer un Nouveau Cours</h1>
-          
+
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        <button
+          onClick={() => router.push('/admin/courses')}
+          className="flex items-center text-sm text-gray-600 hover:text-indigo-600 mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1" /> Retour aux cours
+        </button>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center">
+              <BookOpen className="w-7 h-7 mr-3 text-indigo-600" />
+              Créer un nouveau cours
+            </h1>
+            <p className="text-gray-500 mt-1 text-sm">
+              Remplissez les informations du cours, puis ajoutez les chapitres dans l'éditeur.
+            </p>
+          </div>
+
           {message && (
-            <div className={`mb-6 p-4 rounded-lg ${
-              message.includes('succès') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}>
-              {message}
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className={`mb-6 p-4 rounded-xl flex items-start ${
+                message.includes('succès')
+                  ? 'bg-green-50 text-green-800 border border-green-200'
+                  : 'bg-red-50 text-red-800 border border-red-200'
+              }`}
+            >
+              {message.includes('succès') && <CheckCircle2 className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />}
+              <div>
+                <p>{message}</p>
+                {createdId && (
+                  <button
+                    onClick={() => router.push(`/admin/courses/${createdId}`)}
+                    className="mt-2 text-sm font-medium text-green-900 underline hover:text-green-700"
+                  >
+                    → Ajouter des chapitres à ce cours
+                  </button>
+                )}
+              </div>
+            </motion.div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Titre du cours *
-                </label>
-                <input
-                  type="text"
+            {/* Informations générales */}
+            <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="font-semibold text-gray-900 mb-4 flex items-center">
+                <Sparkles className="w-4 h-4 mr-2 text-indigo-600" />
+                Informations générales
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label className={labelClass}>Titre du cours *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className={inputClass}
+                    placeholder="Ex : Comptabilité générale — Chapitre 1"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Description *</label>
+                  <textarea
+                    required
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                    className={inputClass}
+                    placeholder="Description détaillée du cours…"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Matière *</label>
+                  <select
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    className={inputClass}
+                  >
+                    {SUBJECTS.map((s) => (
+                      <option key={s} value={s}>
+                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            {/* Paramètres */}
+            <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="font-semibold text-gray-900 mb-4 flex items-center">
+                <Layers className="w-4 h-4 mr-2 text-indigo-600" />
+                Paramètres
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div>
+                  <label className={labelClass}>
+                    Niveau : <span className="font-semibold text-indigo-600">{formData.level}/10</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={1}
+                    max={10}
+                    value={formData.level}
+                    onChange={(e) => setFormData({ ...formData, level: +e.target.value })}
+                    className="w-full accent-indigo-600"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>
+                    Difficulté : <span className="font-semibold text-indigo-600">{formData.difficulty}/10</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={1}
+                    max={10}
+                    value={formData.difficulty}
+                    onChange={(e) => setFormData({ ...formData, difficulty: +e.target.value })}
+                    className="w-full accent-indigo-600"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Durée (heures) *</label>
+                  <input
+                    type="number"
+                    min={1}
+                    required
+                    value={formData.duration_hours}
+                    onChange={(e) => setFormData({ ...formData, duration_hours: +e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Programme */}
+            <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="font-semibold text-gray-900 mb-1 flex items-center">
+                <ListChecks className="w-4 h-4 mr-2 text-indigo-600" />
+                Programme
+              </h2>
+              <p className="text-xs text-gray-400 mb-4">
+                Appuyez sur Entrée après chaque élément pour l'ajouter.
+              </p>
+              <div className="space-y-4">
+                <TagInput
+                  label="Objectifs d'apprentissage *"
                   required
-                  value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Ex: Algèbre Linéaire"
+                  values={formData.learning_objectives}
+                  onChange={(v) => setFormData({ ...formData, learning_objectives: v })}
+                  placeholder="Ex : Résoudre des équations linéaires"
+                  accent="bg-indigo-100 text-indigo-800"
+                />
+                <TagInput
+                  label="Sujets couverts *"
+                  required
+                  values={formData.topics}
+                  onChange={(v) => setFormData({ ...formData, topics: v })}
+                  placeholder="Ex : Vecteurs"
+                  accent="bg-emerald-100 text-emerald-800"
+                />
+                <TagInput
+                  label="Prérequis"
+                  values={formData.prerequisites}
+                  onChange={(v) => setFormData({ ...formData, prerequisites: v })}
+                  placeholder="Ex : Notions de base en algèbre"
+                  accent="bg-amber-100 text-amber-800"
                 />
               </div>
+            </section>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Matière *
-                </label>
-                <select
-                  value={formData.subject}
-                  onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            {/* Publication + submit */}
+            <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formData.is_published}
+                  onClick={() => setFormData({ ...formData, is_published: !formData.is_published })}
+                  className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${
+                    formData.is_published ? 'bg-indigo-600' : 'bg-gray-300'
+                  }`}
                 >
-                  <option value="mathématiques">Mathématiques</option>
-                  <option value="physique">Physique</option>
-                  <option value="chimie">Chimie</option>
-                  <option value="biologie">Biologie</option>
-                  <option value="informatique">Informatique</option>
-                  <option value="français">Français</option>
-                  <option value="histoire">Histoire</option>
-                  <option value="géographie">Géographie</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description *
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform mt-0.5 ${
+                      formData.is_published ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+                <span className="text-sm text-gray-700">
+                  Publier immédiatement
+                  <span className="block text-xs text-gray-400">
+                    Visible par les élèves dès la création
+                  </span>
+                </span>
               </label>
-              <textarea
-                required
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Description détaillée du cours..."
-              />
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Niveau (1-10) *
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  required
-                  value={formData.level}
-                  onChange={(e) => setFormData(prev => ({ ...prev, level: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Durée (heures) *
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  required
-                  value={formData.duration_hours}
-                  onChange={(e) => setFormData(prev => ({ ...prev, duration_hours: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Difficulté (1-10) *
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  required
-                  value={formData.difficulty}
-                  onChange={(e) => setFormData(prev => ({ ...prev, difficulty: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Prérequis (séparés par des virgules)
-              </label>
-              <input
-                type="text"
-                value={formData.prerequisites.join(', ')}
-                onChange={(e) => handleArrayInput('prerequisites', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Ex: Notions de base en algèbre, Calcul différentiel"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Objectifs d'apprentissage (séparés par des virgules) *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.learning_objectives.join(', ')}
-                onChange={(e) => handleArrayInput('learning_objectives', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Ex: Résoudre des équations linéaires, Comprendre les matrices, Appliquer les transformations"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sujets couverts (séparés par des virgules) *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.topics.join(', ')}
-                onChange={(e) => handleArrayInput('topics', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Ex: Vecteurs, Matrices, Espaces vectoriels, Applications linéaires"
-              />
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="is_published"
-                checked={formData.is_published}
-                onChange={(e) => setFormData(prev => ({ ...prev, is_published: e.target.checked }))}
-                className="mr-2"
-              />
-              <label htmlFor="is_published" className="text-sm text-gray-700">
-                Publier immédiatement
-              </label>
-            </div>
-
-            <div className="flex justify-end">
-              <Button
+              <button
                 type="submit"
-                variant="primary"
                 disabled={loading}
-                className="px-8 py-3"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center justify-center"
               >
-                {loading ? 'Création...' : 'Créer le cours'}
-              </Button>
-            </div>
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Création…
+                  </>
+                ) : (
+                  'Créer le cours'
+                )}
+              </button>
+            </section>
           </form>
-        </div>
+
+          <p className="text-xs text-gray-400 mt-6 flex items-center">
+            <Upload className="w-3.5 h-3.5 mr-1.5" />
+            Astuce : pour créer un cours depuis un PDF avec extraction automatique des chapitres,
+            utilisez le bouton « Téléverser » sur la page{' '}
+            <button onClick={() => router.push('/admin/courses')} className="underline ml-1 hover:text-indigo-600">
+              Gestion des cours
+            </button>
+            .
+          </p>
+        </motion.div>
+      </main>
+    </div>
+  )
+}
+
+function TagInput({
+  label,
+  values,
+  onChange,
+  placeholder,
+  required,
+  accent,
+}: {
+  label: string
+  values: string[]
+  onChange: (v: string[]) => void
+  placeholder?: string
+  required?: boolean
+  accent: string
+}) {
+  const [input, setInput] = useState('')
+
+  const add = () => {
+    const v = input.trim()
+    if (v && !values.includes(v)) onChange([...values, v])
+    setInput('')
+  }
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
+      <div className="border border-gray-200 rounded-xl bg-gray-50 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500 p-2 transition-colors">
+        {values.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {values.map((v) => (
+              <span key={v} className={`inline-flex items-center text-xs px-2.5 py-1 rounded-full ${accent}`}>
+                {v}
+                <button
+                  type="button"
+                  onClick={() => onChange(values.filter((x) => x !== v))}
+                  className="ml-1.5 opacity-60 hover:opacity-100"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+              e.preventDefault()
+              add()
+            } else if (e.key === 'Backspace' && !input && values.length) {
+              onChange(values.slice(0, -1))
+            }
+          }}
+          onBlur={add}
+          required={required && values.length === 0}
+          className="w-full bg-transparent outline-none text-sm px-1.5 py-1"
+          placeholder={placeholder}
+        />
       </div>
     </div>
   )
