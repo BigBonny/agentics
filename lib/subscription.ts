@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/clerk'
+import { isAdmin } from '@/lib/admin'
 
 export async function getUserSubscription(userId?: string) {
   if (!userId) {
@@ -43,6 +44,13 @@ export async function requireSubscription(userId?: string): Promise<boolean> {
   }
   
   return true
+}
+
+/** Accès au contenu des cours : premium/center actif OU admin (prévisualisation). */
+export async function hasCourseAccess(userId?: string): Promise<boolean> {
+  if (!userId) return false
+  if (await isAdmin(userId)) return true
+  return hasActiveSubscription(userId)
 }
 
 export async function canAccessRecommendations(userId?: string): Promise<boolean> {

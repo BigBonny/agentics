@@ -2,13 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/clerk'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { isAdmin } from '@/lib/admin'
+import { hasCourseAccess } from '@/lib/subscription'
 
 export async function GET(request: NextRequest) {
   try {
-    // Skip authentication for now - just return courses
-    console.log('Fetching courses (no auth check for testing)')
-
     const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    // Détail d'un cours (contenu pédagogique) : réservé aux abonnés premium + admins
+    if (id) {
+      const user = await getCurrentUser()
+      if (!user) {
+        return NextResponse.json({ error: 'Connexion requise' }, { status: 401 })
+      }
+      if (!(await hasCourseAccess(user.id))) {
+        return NextResponse.json({ error: 'Abonnement premium requis', upgrade: true }, { status: 402 })
+      }
+      const { data: course, error } = await supabaseAdmin
+        .from('courses')
+        .select('*, course_content (*)')
+        .eq('id', id)
+        .single()
+      if (error || !course) {
+        return NextResponse.json({ error: 'Cours introuvable' }, { status: 404 })
+      }
+      return NextResponse.json(course)
+    }
+
     const subject = searchParams.get('subject')
     const level = searchParams.get('level')
     const difficulty = searchParams.get('difficulty')

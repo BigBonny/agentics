@@ -16,7 +16,8 @@ import {
   Award,
   ChevronRight,
   Play,
-  RotateCcw
+  RotateCcw,
+  Lock
 } from 'lucide-react'
 import NewHeader from '../../components/NewHeader'
 
@@ -80,6 +81,7 @@ export default function QuizPage() {
   const [timeLimit, setTimeLimit] = useState(10)
   const [startTime, setStartTime] = useState<number | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [accessDenied, setAccessDenied] = useState<'auth' | 'premium' | null>(null)
 
   useEffect(() => {
     if (!courseId) {
@@ -104,6 +106,14 @@ export default function QuizPage() {
     try {
       setLoading(true)
       const response = await fetch(`/api/courses?id=${courseId}`)
+      if (response.status === 401) {
+        setAccessDenied('auth')
+        return
+      }
+      if (response.status === 402) {
+        setAccessDenied('premium')
+        return
+      }
       if (!response.ok) throw new Error('Failed to fetch course')
       
       const data = await response.json()
@@ -133,6 +143,10 @@ export default function QuizPage() {
         }),
       })
 
+      if (response.status === 401 || response.status === 402) {
+        setAccessDenied(response.status === 401 ? 'auth' : 'premium')
+        return
+      }
       if (!response.ok) throw new Error('Failed to generate quiz')
       
       const data = await response.json()
@@ -305,6 +319,41 @@ export default function QuizPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-300 border-t-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Chargement du cours...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <NewHeader />
+        <div className="text-center max-w-md px-4">
+          <div className="w-20 h-20 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="w-10 h-10 text-violet-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">
+            {accessDenied === 'auth' ? 'Connexion requise' : 'Contenu réservé aux abonnés'}
+          </h1>
+          <p className="text-gray-600 mb-8">
+            {accessDenied === 'auth'
+              ? 'Connectez-vous pour accéder aux quiz de cours.'
+              : 'Ce cours et son quiz sont accessibles avec un abonnement Premium. Passez Premium pour débloquer tout le catalogue.'}
+          </p>
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={() => router.push(accessDenied === 'auth' ? '/sign-in' : '/pricing')}
+              className="px-6 py-3 bg-violet-600 text-white rounded-xl font-medium hover:bg-violet-700 transition-colors"
+            >
+              {accessDenied === 'auth' ? 'Se connecter' : 'Passer Premium'}
+            </button>
+            <button
+              onClick={() => router.push('/courses')}
+              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+            >
+              Retour
+            </button>
+          </div>
         </div>
       </div>
     )

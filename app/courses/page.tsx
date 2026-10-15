@@ -16,10 +16,12 @@ import {
   Sparkles,
   Target,
   Layers,
-  Brain
+  Brain,
+  Lock
 } from 'lucide-react'
 import NewHeader from '../../components/NewHeader'
 import NewFooter from '../../components/NewFooter'
+import { isPremiumMetadata } from '../../lib/premium'
 
 interface Course {
   id: string
@@ -84,7 +86,7 @@ const cardVariants = {
 }
 
 // 3D Tilt Card Component
-const CourseCard = ({ course, index }: { course: Course; index: number }) => {
+const CourseCard = ({ course, index, isPremium }: { course: Course; index: number; isPremium: boolean }) => {
   const ref = useRef<HTMLDivElement>(null)
   
   const x = useMotionValue(0)
@@ -272,40 +274,47 @@ const CourseCard = ({ course, index }: { course: Course; index: number }) => {
           )}
 
           {/* Action Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => window.location.href = `/quiz?courseId=${course.id}`}
-            className={`
-              w-full py-3 px-4 rounded-xl font-semibold text-sm
-              bg-gradient-to-r from-indigo-600 to-violet-600 
-              hover:from-indigo-500 hover:to-violet-500
-              text-white shadow-lg shadow-indigo-500/25
-              flex items-center justify-center gap-2
-              transition-all duration-300
-              group/btn
-            `}
-          >
-            <span>Commencer le quiz</span>
-            <ChevronRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
-          </motion.button>
-          
-          {/* Secondary Action */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => window.location.href = `/quiz?courseId=${course.id}`}
-            className={`
-              w-full py-2 px-4 rounded-xl text-sm
-              bg-gray-100 hover:bg-gray-200 text-gray-700
-              flex items-center justify-center gap-2
-              transition-all duration-300
-              mt-2
-            `}
-          >
-            <Brain className="w-4 h-4" />
-            <span>Voir les détails</span>
-          </motion.button>
+          {isPremium ? (
+            <>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => window.location.href = `/quiz?courseId=${course.id}`}
+                className={`
+                  w-full py-3 px-4 rounded-xl font-semibold text-sm
+                  bg-gradient-to-r from-indigo-600 to-violet-600
+                  hover:from-indigo-500 hover:to-violet-500
+                  text-white shadow-lg shadow-indigo-500/25
+                  flex items-center justify-center gap-2
+                  transition-all duration-300
+                  group/btn
+                `}
+              >
+                <span>Commencer le quiz</span>
+                <ChevronRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => window.location.href = `/quiz?courseId=${course.id}`}
+                className="w-full py-2 px-4 rounded-xl text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center gap-2 transition-all duration-300 mt-2"
+              >
+                <Brain className="w-4 h-4" />
+                <span>Voir les détails</span>
+              </motion.button>
+            </>
+          ) : (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => window.location.href = '/pricing'}
+              className="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 transition-all duration-300"
+            >
+              <Lock className="w-4 h-4" />
+              <span>Débloquer avec Premium</span>
+            </motion.button>
+          )}
         </div>
       </div>
     </motion.div>
@@ -395,7 +404,8 @@ const CourseSkeleton = () => (
 )
 
 export default function CoursesPage() {
-  const { isSignedIn } = useUser()
+  const { isSignedIn, user } = useUser()
+  const isPremium = isPremiumMetadata(user?.publicMetadata)
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -620,7 +630,7 @@ export default function CoursesPage() {
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {filteredCourses.map((course, index) => (
-              <CourseCard key={course.id} course={course} index={index} />
+              <CourseCard key={course.id} course={course} index={index} isPremium={isPremium} />
             ))}
           </motion.div>
         ) : (

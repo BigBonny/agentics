@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/clerk'
 import { enqueueQualisoftSync, getQualisoftPassingScore } from '@/lib/qualisoft'
+import { hasCourseAccess } from '@/lib/subscription'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,6 +10,18 @@ export async function POST(request: NextRequest) {
 
     if (!clerkId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    }
+
+    // Une complétion de cours (courseId) est une fonctionnalité premium :
+    // session authentifiée + abonnement actif (ou admin) requis.
+    if (courseId) {
+      const sessionUser = await getCurrentUser()
+      if (!sessionUser || sessionUser.id !== clerkId) {
+        return NextResponse.json({ error: 'Session invalide' }, { status: 401 })
+      }
+      if (!(await hasCourseAccess(sessionUser.id))) {
+        return NextResponse.json({ error: 'Abonnement premium requis', upgrade: true }, { status: 402 })
+      }
     }
 
     // Get user from users table

@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/clerk'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { QuizGenerator } from '@/lib/quiz-generator'
 import { RecommendationEngine } from '@/lib/recommendation-engine'
+import { hasCourseAccess } from '@/lib/subscription'
 import Groq from 'groq-sdk'
 
 const quizGenerator = new QuizGenerator()
@@ -15,48 +16,52 @@ const groq = process.env.GROQ_API_KEY
 
 export async function POST(request: NextRequest) {
   try {
-    // Temporarily remove authentication for testing
-    // const user = await getCurrentUser()
-    // if (!user) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    // }
-    
-    // Mock user for testing
-    const user = { id: 'test-user-id' }
-
     const requestBody = await request.json()
     console.log('Raw request body:', requestBody)
-    
+
     const { type, ...data } = requestBody
     console.log('Parsed request:', { type, data })
 
+    // Les quiz liés à un cours sont premium — le quiz invité passe par /api/quiz/guest
+    const premiumTypes = ['generateCourseQuiz', 'evaluateQuiz']
+    const user = await getCurrentUser()
+    if (premiumTypes.includes(type)) {
+      if (!user) {
+        return NextResponse.json({ error: 'Connexion requise' }, { status: 401 })
+      }
+      if (!(await hasCourseAccess(user.id))) {
+        return NextResponse.json({ error: 'Abonnement premium requis', upgrade: true }, { status: 402 })
+      }
+    }
+    const userId = user?.id ?? 'anonymous'
+
     switch (type) {
       case 'generateCourseQuiz':
-        return await handleGenerateCourseQuiz(data, user.id)
-      
+        return await handleGenerateCourseQuiz(data, userId)
+
       case 'evaluateQuiz':
-        return await handleEvaluateQuiz(data, user.id)
+        return await handleEvaluateQuiz(data, userId)
       
       case 'generate_quiz':
-        return await handleGenerateQuiz(data, user.id)
+        return await handleGenerateQuiz(data, userId)
       
       case 'generate_adaptive_quiz':
-        return await handleGenerateAdaptiveQuiz(data, user.id)
+        return await handleGenerateAdaptiveQuiz(data, userId)
       
       case 'generate_exercises':
-        return await handleGenerateExercises(data, user.id)
+        return await handleGenerateExercises(data, userId)
       
       case 'evaluate_answers':
-        return await handleEvaluateAnswers(data, user.id)
+        return await handleEvaluateAnswers(data, userId)
       
       case 'get_recommendations':
-        return await handleGetRecommendations(data, user.id)
+        return await handleGetRecommendations(data, userId)
       
       case 'analyze_patterns':
-        return await handleAnalyzePatterns(data, user.id)
+        return await handleAnalyzePatterns(data, userId)
       
       case 'generate_learning_path':
-        return await handleGenerateLearningPath(data, user.id)
+        return await handleGenerateLearningPath(data, userId)
       
       default:
         return NextResponse.json({ error: 'Invalid type' }, { status: 400 })

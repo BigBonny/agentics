@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useUser } from '@clerk/nextjs'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   GraduationCap,
@@ -12,9 +13,11 @@ import {
   Play,
   Award,
   Search,
+  Lock,
 } from 'lucide-react'
 import NewHeader from '../../components/NewHeader'
 import NewFooter from '../../components/NewFooter'
+import { isPremiumMetadata } from '../../lib/premium'
 
 interface Chapter {
   id: string
@@ -56,6 +59,8 @@ const typeLabels: Record<string, string> = {
 }
 
 export default function SubjectsPage() {
+  const { user } = useUser()
+  const isPremium = isPremiumMetadata(user?.publicMetadata)
   const [tree, setTree] = useState<FormationGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -280,16 +285,28 @@ export default function SubjectsPage() {
                                           )}
                                           {chapter.courses.length > 0 ? (
                                             <div className="space-y-1">
-                                              {chapter.courses.map((c) => (
-                                                <a
-                                                  key={c.id}
-                                                  href={`/quiz?courseId=${c.id}`}
-                                                  className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors group"
-                                                >
-                                                  <Play className="w-3.5 h-3.5 mr-2 group-hover:translate-x-0.5 transition-transform" />
-                                                  {c.title}
-                                                </a>
-                                              ))}
+                                              {chapter.courses.map((c) =>
+                                                isPremium ? (
+                                                  <a
+                                                    key={c.id}
+                                                    href={`/quiz?courseId=${c.id}`}
+                                                    className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors group"
+                                                  >
+                                                    <Play className="w-3.5 h-3.5 mr-2 group-hover:translate-x-0.5 transition-transform" />
+                                                    {c.title}
+                                                  </a>
+                                                ) : (
+                                                  <a
+                                                    key={c.id}
+                                                    href="/pricing"
+                                                    className="flex items-center text-sm text-gray-500 hover:text-amber-600 hover:bg-amber-50 px-3 py-2 rounded-lg transition-colors"
+                                                  >
+                                                    <Lock className="w-3.5 h-3.5 mr-2" />
+                                                    {c.title}
+                                                    <span className="ml-auto text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Premium</span>
+                                                  </a>
+                                                )
+                                              )}
                                             </div>
                                           ) : (
                                             <p className="text-xs text-gray-400 italic">Cours en préparation.</p>
