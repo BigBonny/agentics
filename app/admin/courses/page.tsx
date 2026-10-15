@@ -18,6 +18,7 @@ import {
   AlertCircle,
   CheckSquare,
   Square,
+  GraduationCap,
 } from 'lucide-react'
 import Header from '../../../components/Header'
 import BatchUpload from '../../../components/BatchUpload'
@@ -162,6 +163,13 @@ export default function CourseManagement() {
           </div>
 
           <div className="flex space-x-3">
+            <button
+              onClick={() => router.push('/admin/subjects')}
+              className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-4 py-2.5 rounded-xl font-medium transition-colors flex items-center space-x-2 shadow-sm"
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span>Matières</span>
+            </button>
             <button
               onClick={() => router.push('/admin/create-course')}
               className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-4 py-2.5 rounded-xl font-medium transition-colors flex items-center space-x-2 shadow-sm"

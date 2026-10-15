@@ -71,7 +71,7 @@ export interface BatchResult {
   results: PushResult[]
 }
 
-interface QualisoftConfig {
+export interface QualisoftConfig {
   mode: QualisoftMode
   apiUrl: string
   apiKey: string
@@ -288,7 +288,7 @@ export async function upsertCourseMapping(courseId: string, formationCode: strin
 type OdooParams = Record<string, unknown>
 
 /** Appel à l'API externe JSON-2 d'Odoo 19. */
-async function odooCall<T>(cfg: QualisoftConfig, model: string, method: string, params: OdooParams): Promise<T> {
+export async function odooCall<T>(cfg: QualisoftConfig, model: string, method: string, params: OdooParams): Promise<T> {
   if (!cfg.apiUrl || !cfg.apiKey) {
     throw new QualisoftError('Mode api sélectionné mais QUALISOFT_API_URL ou QUALISOFT_API_KEY manquant', false)
   }
