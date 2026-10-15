@@ -427,24 +427,32 @@ export default function AdminSubjects() {
                                     chapter={chapter}
                                     expanded={isChapterExpanded(chapter.id)}
                                     onToggle={() => toggle(expandedChapters, setExpandedChapters, chapter.id)}
-                                    onEdit={() => setEditingChapter(chapter)}
+                                    onEdit={() =>
+                                      setEditingChapter(editingChapter?.id === chapter.id ? null : chapter)
+                                    }
                                     onDelete={() => deleteChapter(chapter)}
                                     onAttach={() => setAttachChapterId(attachChapterId === chapter.id ? null : chapter.id)}
+                                    onCreateCourse={() =>
+                                      router.push(
+                                        `/admin/create-course?chapterId=${chapter.id}&chapterTitle=${encodeURIComponent(chapter.title)}`
+                                      )
+                                    }
                                     onDetachCourse={(courseId) => detachCourse(chapter.id, courseId)}
                                     attachOpen={attachChapterId === chapter.id}
+                                    editing={editingChapter?.id === chapter.id}
+                                    editForm={
+                                      <ChapterForm
+                                        chapter={chapter}
+                                        onSave={(c) => saveChapter(c, subject.id, chapter.id)}
+                                        onCancel={() => setEditingChapter(null)}
+                                      />
+                                    }
                                     candidates={unlinkedCourses}
                                     onPickCourse={(courseId) => attachCourse(chapter.id, courseId)}
                                     typeLabels={typeLabels}
                                   />
                                 ))}
 
-                                {editingChapter && editingChapter.subject_id === subject.id && (
-                                  <ChapterForm
-                                    chapter={editingChapter}
-                                    onSave={(c) => saveChapter(c, subject.id, editingChapter.id)}
-                                    onCancel={() => setEditingChapter(null)}
-                                  />
-                                )}
                                 {addingChapterTo === subject.id && (
                                   <ChapterForm
                                     onSave={(c) => saveChapter(c, subject.id)}
@@ -485,8 +493,11 @@ function ChapterRow({
   onEdit,
   onDelete,
   onAttach,
+  onCreateCourse,
   onDetachCourse,
   attachOpen,
+  editing,
+  editForm,
   candidates,
   onPickCourse,
   typeLabels,
@@ -497,8 +508,11 @@ function ChapterRow({
   onEdit: () => void
   onDelete: () => void
   onAttach: () => void
+  onCreateCourse: () => void
   onDetachCourse: (courseId: string) => void
   attachOpen: boolean
+  editing: boolean
+  editForm: React.ReactNode
   candidates: Course[]
   onPickCourse: (courseId: string) => void
   typeLabels: Record<string, string>
@@ -528,7 +542,10 @@ function ChapterRow({
           <button onClick={onAttach} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50" title="Rattacher un cours">
             <Link2 className="w-4 h-4" />
           </button>
-          <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100" title="Modifier">
+          <button onClick={onCreateCourse} className="p-1.5 text-gray-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50" title="Créer un cours">
+            <Plus className="w-4 h-4" />
+          </button>
+          <button onClick={onEdit} className={`p-1.5 rounded-lg transition-colors ${editing ? 'text-indigo-600 bg-indigo-50' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'}`} title="Modifier">
             <Edit className="w-4 h-4" />
           </button>
           <button onClick={onDelete} className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50" title="Supprimer">
@@ -568,6 +585,8 @@ function ChapterRow({
           ))}
         </div>
       )}
+
+      {editing && <div className="border-t border-gray-100 p-3">{editForm}</div>}
 
       {attachOpen && <CoursePicker candidates={candidates} onPick={onPickCourse} />}
     </div>

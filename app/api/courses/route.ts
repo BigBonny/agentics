@@ -90,7 +90,8 @@ export async function POST(request: NextRequest) {
       prerequisites,
       learning_objectives,
       topics,
-      difficulty
+      difficulty,
+      chapter_id
     } = await request.json()
 
     // Get or create user record in Supabase
@@ -140,7 +141,8 @@ export async function POST(request: NextRequest) {
         topics: topics || [],
         difficulty,
         created_by: userId,
-        is_published: false
+        is_published: false,
+        ...(chapter_id ? { chapter_id } : {})
       })
       .select()
       .single()

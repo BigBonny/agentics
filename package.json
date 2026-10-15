@@ -43,6 +43,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.0.0",
     "stripe-cli": "^0.1.0",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

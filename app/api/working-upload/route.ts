@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/clerk'
-import { supabase, supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
+import { isAdmin } from '@/lib/admin'
+import { extractCourseContent } from '@/lib/course-extraction'
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (!(await isAdmin(user.id))) {
+      return NextResponse.json({ error: 'Accès réservé aux administrateurs' }, { status: 403 })
     }
 
     const formData = await request.formData()
@@ -20,50 +29,84 @@ export async function POST(request: NextRequest) {
     const topics = JSON.parse(formData.get('topics') as string || '[]')
     const learning_objectives = JSON.parse(formData.get('learning_objectives') as string || '[]')
     const prerequisites = JSON.parse(formData.get('prerequisites') as string || '[]')
+    const chapterId = formData.get('chapterId') as string | null
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    console.log('🚀 Working upload test:', { 
-      fileName: file.name, 
-      fileSize: file.size, 
-      fileType: file.type,
-      fileSizeMB: (file.size / 1024 / 1024).toFixed(2)
-    })
-
-    // Check file size (50MB limit = 52428800 bytes)
-    const maxSize = 52428800 // 50MB
+    const maxSize = 50 * 1024 * 1024
     if (file.size > maxSize) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'File too large',
-        details: {
-          fileSize: file.size,
-          maxSize: maxSize,
-          fileSizeMB: (file.size / 1024 / 1024).toFixed(2),
-          maxSizeMB: (maxSize / 1024 / 1024).toFixed(2)
-        }
+        details: { fileSizeMB: (file.size / 1024 / 1024).toFixed(2), maxSizeMB: 50 },
       }, { status: 400 })
     }
 
-    const fileExt = file.name.split('.').pop()
-    
-    // For TXT files, read content directly and store in database
-    if (fileExt === 'txt' || file.type === 'text/plain') {
-      console.log('📄 Processing TXT file - reading content directly')
-      const textContent = await file.text()
-      console.log('TXT content length:', textContent.length)
-      console.log('TXT content preview:', textContent.substring(0, 200))
-      
-      // Create course record with text content
-      const courseData = {
+    const fileExt = file.name.split('.').pop() || 'bin'
+    const isText = file.type === 'text/plain' || fileExt === 'txt'
+    const isPdf = file.type === 'application/pdf' || fileExt === 'pdf'
+
+    if (!isText && !isPdf) {
+      return NextResponse.json(
+        { error: 'Type de fichier non supporté — envoyez un PDF ou un TXT.' },
+        { status: 400 }
+      )
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer())
+
+    // Stocke le fichier (utile pour ré-extraction ultérieure / audit)
+    const filePath = `course-files/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from('course-images')
+      .upload(filePath, buffer, { cacheControl: '3600', upsert: true, contentType: file.type })
+
+    if (uploadError) {
+      console.error('❌ Upload failed:', uploadError)
+      return NextResponse.json({ error: 'Upload failed', details: uploadError.message }, { status: 500 })
+    }
+
+    const { data: urlData } = supabaseAdmin.storage.from('course-images').getPublicUrl(filePath)
+
+    // created_by référence users.id (UUID Supabase), pas l'ID Clerk
+    let { data: dbUser } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('clerk_id', user.id)
+      .single()
+
+    if (!dbUser) {
+      const { data: newUser } = await supabaseAdmin
+        .from('users')
+        .insert({
+          clerk_id: user.id,
+          email: user.emailAddresses[0]?.emailAddress || '',
+          first_name: user.firstName || '',
+          last_name: user.lastName || '',
+          subscription_tier: 'free',
+          subscription_status: 'active',
+        })
+        .select('id')
+        .single()
+      dbUser = newUser
+    }
+
+    if (!dbUser) {
+      return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 500 })
+    }
+
+    // Crée le cours
+    const { data: course, error: courseError } = await supabaseAdmin
+      .from('courses')
+      .insert({
         title,
         description,
-        image_url: null, // No file URL needed for TXT
-        content_type: 'txt',
-        extraction_status: 'completed', // Already extracted
+        image_url: urlData.publicUrl,
+        content_type: isPdf ? 'pdf' : 'txt',
+        extraction_status: 'processing',
         is_published: false,
-        created_by: user.id,
+        created_by: dbUser.id,
         subject,
         level,
         difficulty,
@@ -71,135 +114,37 @@ export async function POST(request: NextRequest) {
         topics,
         learning_objectives,
         prerequisites,
-        ai_extracted_content: textContent // Store text directly
-      }
-
-      console.log('💾 Creating course record with TXT content:', courseData)
-
-      const { data: courseResult, error: courseError } = await supabaseAdmin
-        .from('courses')
-        .insert(courseData)
-        .select()
-        .single()
-
-      if (courseError) {
-        console.error('❌ Course creation failed:', courseError)
-        return NextResponse.json({ 
-          error: 'Course creation failed',
-          details: courseError.message
-        }, { status: 500 })
-      }
-
-      console.log('✅ Course created successfully with TXT content:', courseResult.id)
-      return NextResponse.json({ course: courseResult, success: true })
-    }
-
-    // For other file types, upload to Supabase storage
-    const fileName = `working-${Date.now()}.${fileExt}`
-    const filePath = `course-images/${fileName}`
-
-    console.log('📤 Uploading to:', filePath)
-
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('course-images')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true,
-        contentType: file.type
+        ...(chapterId ? { chapter_id: chapterId } : {}),
       })
-
-    if (uploadError) {
-      console.error('❌ Upload failed:', uploadError)
-      return NextResponse.json({ 
-        error: 'Upload failed',
-        details: uploadError.message,
-        fileName,
-        filePath,
-        fileSize: file.size
-      }, { status: 500 })
-    }
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('course-images')
-      .getPublicUrl(uploadData.path)
-
-    const imageUrl = urlData.publicUrl
-
-    // Create course record
-    const courseData = {
-      title,
-      description,
-      image_url: imageUrl,
-      content_type: file.type === 'application/pdf' ? 'pdf' : (file.type === 'text/plain' || fileExt === 'txt' ? 'txt' : 'image'),
-      extraction_status: 'pending',
-      is_published: false,
-      created_by: user.id,
-      subject,
-      level,
-      difficulty,
-      duration_hours,
-      topics,
-      learning_objectives,
-      prerequisites
-    }
-
-    console.log('💾 Creating course record:', courseData)
-
-    const { data: courseResult, error: courseError } = await supabaseAdmin
-      .from('courses')
-      .insert(courseData)
       .select()
       .single()
 
     if (courseError) {
       console.error('❌ Course creation failed:', courseError)
-
-      // Clean up uploaded file if course creation fails
-      await supabase.storage.from('course-images').remove([filePath])
-      
-      return NextResponse.json({ 
-        error: 'Course creation failed',
-        details: courseError.message,
-        courseData
-      }, { status: 500 })
+      await supabaseAdmin.storage.from('course-images').remove([filePath])
+      return NextResponse.json({ error: 'Course creation failed', details: courseError.message }, { status: 500 })
     }
 
-    console.log('✅ Course created successfully:', courseResult.id)
+    // Extraction synchrone : fiable sur serverless (vs setTimeout + self-fetch gelé après la réponse)
+    await extractCourseContent(course.id, buffer, file.name, file.type)
 
-    // Trigger AI content extraction
-    setTimeout(async () => {
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
-        await fetch(`${baseUrl}/api/ai/extract-content`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            courseId: courseResult.id,
-            imageUrl: imageUrl,
-            contentType: file.type
-          })
-        })
-        console.log('🤖 AI extraction triggered for course:', courseResult.id)
-      } catch (error) {
-        console.error('❌ Error triggering AI extraction:', error)
-      }
-    }, 1000)
+    const { data: fresh } = await supabaseAdmin
+      .from('courses')
+      .select('extraction_status')
+      .eq('id', course.id)
+      .single()
 
     return NextResponse.json({
-      success: true,
-      course: courseResult,
-      fileUrl: imageUrl,
-      message: 'Course uploaded and created successfully'
+      success: fresh?.extraction_status === 'completed',
+      course: { ...course, extraction_status: fresh?.extraction_status },
+      extraction_status: fresh?.extraction_status,
+      message:
+        fresh?.extraction_status === 'completed'
+          ? 'Cours créé et contenu extrait'
+          : 'Cours créé — extraction du contenu en échec, réessayez via Ré-extraire',
     })
-
   } catch (error: any) {
     console.error('❌ Upload error:', error)
-    return NextResponse.json({ 
-      error: 'Upload failed', 
-      details: error.message 
-    }, { status: 500 })
+    return NextResponse.json({ error: 'Upload failed', details: error.message }, { status: 500 })
   }
 }

@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/clerk'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
+import { isAdmin } from '@/lib/admin'
+import { extractCourseContent } from '@/lib/course-extraction'
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (!(await isAdmin(user.id))) {
+      return NextResponse.json({ error: 'Accès réservé aux administrateurs' }, { status: 403 })
     }
 
     const formData = await request.formData()
@@ -30,7 +39,7 @@ export async function POST(request: NextRequest) {
 
     // Check if bucket exists and is accessible
     try {
-      const { data: buckets } = await supabase.storage.listBuckets()
+      const { data: buckets } = await supabaseAdmin.storage.listBuckets()
       const bucketExists = buckets?.some(bucket => bucket.name === 'course-images')
       
       if (!bucketExists) {
@@ -53,7 +62,7 @@ export async function POST(request: NextRequest) {
     const fileName = `${courseId}-${Date.now()}.${fileExt}`
     const filePath = `course-images/${fileName}`
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from('course-images')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -66,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get public URL
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = supabaseAdmin.storage
       .from('course-images')
       .getPublicUrl(filePath)
 
@@ -94,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     if (courseId && courseId !== 'new') {
       // Update existing course
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('courses')
         .update(courseData)
         .eq('id', courseId)
@@ -108,7 +117,7 @@ export async function POST(request: NextRequest) {
       courseResult = data
     } else {
       // Create new course
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('courses')
         .insert(courseData)
         .select()
@@ -123,25 +132,12 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Course file uploaded successfully:', courseResult?.[0]?.id)
 
-    // Trigger AI content extraction
-    setTimeout(async () => {
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
-        await fetch(`${baseUrl}/api/ai/extract-content`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            courseId: courseResult?.[0]?.id,
-            imageUrl: imageUrl,
-            contentType: file.type
-          })
-        })
-      } catch (error) {
-        console.error('❌ Error triggering AI extraction:', error)
-      }
-    }, 1000)
+    // Extraction synchrone : fiable sur serverless (le setTimeout + self-fetch
+    // est gelé dès la réponse renvoyée sur Vercel).
+    const newId = courseResult?.[0]?.id
+    if (newId && (file.type === 'application/pdf' || file.type === 'text/plain' || file.name.endsWith('.pdf') || file.name.endsWith('.txt'))) {
+      await extractCourseContent(newId, Buffer.from(await file.arrayBuffer()), file.name, file.type)
+    }
 
     return NextResponse.json({
       success: true,

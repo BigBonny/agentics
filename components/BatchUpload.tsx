@@ -116,7 +116,12 @@ export default function BatchUpload({ onUploadComplete, onCancel }: BatchUploadP
       const results = await Promise.all(uploadPromises)
       
       setUploadProgress(100)
-      setSuccess(`✅ ${results.length} cours téléversés avec succès! L'IA analyse maintenant le contenu...`)
+      const failed = results.filter((r) => r.extraction_status === 'failed')
+      setSuccess(
+        failed.length
+          ? `⚠️ ${results.length - failed.length}/${results.length} cours analysés — ${failed.length} extraction(s) en échec (voir statut sur la carte).`
+          : `✅ ${results.length} cours téléversés et analysés par l'IA !`
+      )
       
       setTimeout(() => {
         onUploadComplete?.(results.map(r => r.course))

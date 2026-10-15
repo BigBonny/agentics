@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft,
@@ -45,8 +45,19 @@ const emptyForm = {
 }
 
 export default function CreateCourse() {
+  return (
+    <Suspense fallback={null}>
+      <CreateCourseInner />
+    </Suspense>
+  )
+}
+
+function CreateCourseInner() {
   const { isSignedIn } = useUser()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const chapterId = searchParams.get('chapterId')
+  const chapterTitle = searchParams.get('chapterTitle')
   const [formData, setFormData] = useState(emptyForm)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -62,7 +73,7 @@ export default function CreateCourse() {
       const response = await fetch('/api/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, ...(chapterId ? { chapter_id: chapterId } : {}) }),
       })
 
       if (response.ok) {
@@ -118,6 +129,11 @@ export default function CreateCourse() {
             <p className="text-gray-500 mt-1 text-sm">
               Remplissez les informations du cours, puis ajoutez les chapitres dans l'éditeur.
             </p>
+            {chapterId && (
+              <p className="mt-3 inline-flex items-center text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full">
+                Sera rattaché au chapitre « {chapterTitle ?? chapterId} »
+              </p>
+            )}
           </div>
 
           {message && (
