@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/clerk'
 import { supabase } from '@/lib/supabase'
+import { hasCourseAccess } from '@/lib/subscription'
 
 export async function GET(
   request: NextRequest,
@@ -33,6 +34,11 @@ export async function GET(
     // Check if user has access (published course or creator)
     if (!course.is_published && course.created_by !== user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+    }
+
+    // Contenu pédagogique (course_content, quizzes) : premium requis
+    if (!(await hasCourseAccess(user.id))) {
+      return NextResponse.json({ error: 'Abonnement premium requis', upgrade: true }, { status: 402 })
     }
 
     return NextResponse.json(course)
