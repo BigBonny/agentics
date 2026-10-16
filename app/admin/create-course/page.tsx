@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, Suspense, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -14,6 +14,7 @@ import {
   Sparkles,
   Layers,
   ListChecks,
+  GraduationCap,
 } from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
 import Header from '../../../components/NewHeader'
@@ -52,16 +53,94 @@ export default function CreateCourse() {
   )
 }
 
+interface ChapterOption {
+  id: string
+  title: string
+}
+
+interface SubjectOption {
+  id: string
+  name: string
+  chapters: ChapterOption[]
+}
+
+interface FormationOption {
+  code: string
+  label: string
+  subjects: SubjectOption[]
+}
+
 function CreateCourseInner() {
   const { isSignedIn } = useUser()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const chapterId = searchParams.get('chapterId')
+  const chapterIdParam = searchParams.get('chapterId')
   const chapterTitle = searchParams.get('chapterTitle')
   const [formData, setFormData] = useState(emptyForm)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [createdId, setCreatedId] = useState<string | null>(null)
+
+  const [tree, setTree] = useState<FormationOption[]>([])
+  const [selFormation, setSelFormation] = useState('')
+  const [selSubject, setSelSubject] = useState('')
+  const [selChapter, setSelChapter] = useState(chapterIdParam ?? '')
+
+  // Charge l'arbre Formation › Matière › Chapitre pour rattacher le cours à un
+  // chapitre (hiérarchie QualiSoft) plutôt qu'à un champ matière libre.
+  useEffect(() => {
+    fetch('/api/admin/subjects')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const groups: FormationOption[] = data?.tree ?? []
+        setTree(groups)
+        if (chapterIdParam) {
+          // Présélectionne formation/matière/chapitre quand on vient d'une ligne chapitre
+          for (const g of groups) {
+            for (const s of g.subjects) {
+              if (s.chapters?.some((c: any) => c.id === chapterIdParam)) {
+                setSelFormation(g.code)
+                setSelSubject(s.id)
+                return
+              }
+              const nested = (s.chapters ?? []).flatMap((c: any) => c.children ?? [])
+              if (nested.some((c: any) => c.id === chapterIdParam)) {
+                setSelFormation(g.code)
+                setSelSubject(s.id)
+                return
+              }
+            }
+          }
+        }
+      })
+      .catch(() => undefined)
+  }, [chapterIdParam])
+
+  const flatChapters = (subject: SubjectOption | undefined): ChapterOption[] => {
+    if (!subject) return []
+    const out: ChapterOption[] = []
+    const walk = (chs: any[], prefix: string) => {
+      for (const c of chs ?? []) {
+        out.push({ id: c.id, title: prefix + c.title })
+        if (c.children?.length) walk(c.children, prefix + c.title + ' › ')
+      }
+    }
+    walk(subject.chapters ?? [], '')
+    return out
+  }
+
+  const currentFormation = tree.find((f) => f.code === selFormation)
+  const currentSubject = currentFormation?.subjects.find((s) => s.id === selSubject)
+  const chapterOptions = flatChapters(currentSubject)
+  const chapterId = selChapter || null
+
+  const selectChapter = (id: string) => {
+    setSelChapter(id)
+    if (id && currentSubject) {
+      // La matière du cours suit automatiquement la matière du chapitre choisi
+      setFormData((f) => ({ ...f, subject: currentSubject.name.toLowerCase() }))
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -127,13 +206,8 @@ function CreateCourseInner() {
               Créer un nouveau cours
             </h1>
             <p className="text-gray-500 mt-1 text-sm">
-              Remplissez les informations du cours, puis ajoutez les chapitres dans l'éditeur.
+              Remplissez les informations du cours et rattachez-le à un chapitre du programme.
             </p>
-            {chapterId && (
-              <p className="mt-3 inline-flex items-center text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full">
-                Sera rattaché au chapitre « {chapterTitle ?? chapterId} »
-              </p>
-            )}
           </div>
 
           {message && (
@@ -154,7 +228,7 @@ function CreateCourseInner() {
                     onClick={() => router.push(`/admin/courses/${createdId}`)}
                     className="mt-2 text-sm font-medium text-green-900 underline hover:text-green-700"
                   >
-                    → Ajouter des chapitres à ce cours
+                    → Ajouter des sections à ce cours
                   </button>
                 )}
               </div>
@@ -193,19 +267,98 @@ function CreateCourseInner() {
                 </div>
                 <div>
                   <label className={labelClass}>Matière *</label>
+                  {chapterId && currentSubject ? (
+                    <div className={`${inputClass} bg-indigo-50 text-indigo-800 flex items-center`}>
+                      {currentSubject.name}
+                      <span className="ml-2 text-xs text-indigo-500">(déduite du chapitre)</span>
+                    </div>
+                  ) : (
+                    <select
+                      value={formData.subject}
+                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                      className={inputClass}
+                    >
+                      {SUBJECTS.map((s) => (
+                        <option key={s} value={s}>
+                          {s.charAt(0).toUpperCase() + s.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* Rattachement au programme */}
+            <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="font-semibold text-gray-900 mb-1 flex items-center">
+                <GraduationCap className="w-4 h-4 mr-2 text-indigo-600" />
+                Rattachement au programme
+              </h2>
+              <p className="text-xs text-gray-400 mb-4">
+                Choisissez le chapitre auquel ce cours appartient : Formation → Matière → Chapitre.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className={labelClass}>Formation</label>
                   <select
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    value={selFormation}
+                    onChange={(e) => {
+                      setSelFormation(e.target.value)
+                      setSelSubject('')
+                      selectChapter('')
+                    }}
                     className={inputClass}
                   >
-                    {SUBJECTS.map((s) => (
-                      <option key={s} value={s}>
-                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                    <option value="">— Choisir —</option>
+                    {tree.map((f) => (
+                      <option key={f.code} value={f.code}>
+                        {f.label !== f.code ? `${f.label} (${f.code})` : f.code}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Matière</label>
+                  <select
+                    value={selSubject}
+                    onChange={(e) => {
+                      setSelSubject(e.target.value)
+                      selectChapter('')
+                    }}
+                    disabled={!selFormation}
+                    className={`${inputClass} disabled:opacity-50`}
+                  >
+                    <option value="">— Choisir —</option>
+                    {currentFormation?.subjects.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Chapitre</label>
+                  <select
+                    value={selChapter}
+                    onChange={(e) => selectChapter(e.target.value)}
+                    disabled={!selSubject}
+                    className={`${inputClass} disabled:opacity-50`}
+                  >
+                    <option value="">— Aucun / non rattaché —</option>
+                    {chapterOptions.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title}
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
+              {chapterId && (
+                <p className="mt-3 inline-flex items-center text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full">
+                  Sera rattaché à « {chapterOptions.find((c) => c.id === chapterId)?.title ?? chapterTitle ?? 'chapitre sélectionné'} »
+                </p>
+              )}
             </section>
 
             {/* Paramètres */}

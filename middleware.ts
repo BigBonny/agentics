@@ -16,6 +16,8 @@ export default authMiddleware({
     '/_next/chunks/(.*)',
     '/api/auth/test',
     '/courses',
+    '/subjects',
+    '/api/subjects',
     '/quiz',
     '/quiz/guest',
     '/api/quiz/guest',

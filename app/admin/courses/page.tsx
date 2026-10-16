@@ -37,8 +37,15 @@ interface Course {
   image_url?: string
   content_type: string
   extraction_status: string
+  chapter_id: string | null
   created_at: string
   updated_at: string
+}
+
+interface ChapterRef {
+  title: string
+  subjectName: string
+  formationLabel: string
 }
 
 const statusStyles: Record<string, string> = {
@@ -58,10 +65,35 @@ export default function CourseManagement() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showBatchUpload, setShowBatchUpload] = useState(false)
   const [selectedCourses, setSelectedCourses] = useState<string[]>([])
+  const [chapterMap, setChapterMap] = useState<Map<string, ChapterRef>>(new Map())
 
   useEffect(() => {
     fetchCourses()
+    fetchChapterMap()
   }, [])
+
+  const fetchChapterMap = async () => {
+    try {
+      const res = await fetch('/api/admin/subjects')
+      if (!res.ok) return
+      const data = await res.json()
+      const map = new Map<string, ChapterRef>()
+      const walk = (chapters: any[], subjectName: string, formationLabel: string) => {
+        for (const ch of chapters ?? []) {
+          map.set(ch.id, { title: ch.title, subjectName, formationLabel })
+          if (ch.children?.length) walk(ch.children, subjectName, formationLabel)
+        }
+      }
+      for (const group of data.tree ?? []) {
+        for (const subject of group.subjects ?? []) {
+          walk(subject.chapters, subject.name, group.label || group.code)
+        }
+      }
+      setChapterMap(map)
+    } catch {
+      // Silencieux : l'affichage du rattachement est secondaire
+    }
+  }
 
   const fetchCourses = async () => {
     try {
@@ -77,6 +109,23 @@ export default function CourseManagement() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const chapterBadge = (course: Course) => {
+    const ref = course.chapter_id ? chapterMap.get(course.chapter_id) : undefined
+    return ref ? (
+      <span
+        className="inline-flex items-center text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full max-w-full"
+        title={`${ref.formationLabel} › ${ref.subjectName} › ${ref.title}`}
+      >
+        <GraduationCap className="w-3 h-3 mr-1 flex-shrink-0" />
+        <span className="truncate">{ref.subjectName} › {ref.title}</span>
+      </span>
+    ) : (
+      <span className="inline-flex items-center text-xs bg-gray-50 text-gray-400 border border-gray-200 px-2.5 py-1 rounded-full">
+        Non rattaché
+      </span>
+    )
   }
 
   const filteredCourses = courses.filter(
@@ -336,6 +385,7 @@ export default function CourseManagement() {
                     <h3 className="font-semibold text-gray-900 mb-1.5 line-clamp-2 group-hover:text-indigo-700 transition-colors">
                       {course.title}
                     </h3>
+                    <div className="mb-2">{chapterBadge(course)}</div>
                     <p className="text-sm text-gray-500 mb-4 line-clamp-2">{course.description}</p>
 
                     <div className="flex items-center justify-between mt-auto">
@@ -393,6 +443,7 @@ export default function CourseManagement() {
                           {course.extraction_status}
                         </span>
                       </div>
+                      <div className="mb-1">{chapterBadge(course)}</div>
                       <div className="flex items-center space-x-3 text-xs text-gray-400">
                         <span className="flex items-center"><Clock className="w-3.5 h-3.5 mr-1" />{course.duration_hours}h</span>
                         <span className="flex items-center"><Target className="w-3.5 h-3.5 mr-1" />{course.difficulty}/10</span>

@@ -38,8 +38,15 @@ interface Course {
   created_at: string
   updated_at: string
   created_by: string
+  chapter_id?: string | null
   diploma?: string
   chapters?: string[]
+}
+
+interface ChapterRef {
+  title: string
+  subjectName: string
+  formationLabel: string
 }
 
 // Diploma levels hierarchy
@@ -86,7 +93,7 @@ const cardVariants = {
 }
 
 // 3D Tilt Card Component
-const CourseCard = ({ course, index, isPremium }: { course: Course; index: number; isPremium: boolean }) => {
+const CourseCard = ({ course, index, isPremium, chapterRef }: { course: Course; index: number; isPremium: boolean; chapterRef?: ChapterRef }) => {
   const ref = useRef<HTMLDivElement>(null)
   
   const x = useMotionValue(0)
@@ -204,9 +211,17 @@ const CourseCard = ({ course, index, isPremium }: { course: Course; index: numbe
           </div>
 
           {/* Title */}
-          <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-gray-900 transition-colors">
+          <h3 className="text-xl font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-gray-900 transition-colors">
             {course.title}
           </h3>
+
+          {/* Rattachement : Matière › Chapitre */}
+          {chapterRef && (
+            <p className="text-xs text-violet-600 font-medium mb-2 flex items-center gap-1 truncate" title={`${chapterRef.formationLabel} › ${chapterRef.subjectName} › ${chapterRef.title}`}>
+              <GraduationCap className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{chapterRef.subjectName} › {chapterRef.title}</span>
+            </p>
+          )}
 
           {/* Description */}
           <p className="text-gray-600 text-sm mb-6 line-clamp-3 flex-grow leading-relaxed">
@@ -411,11 +426,36 @@ export default function CoursesPage() {
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null)
+  const [chapterMap, setChapterMap] = useState<Map<string, ChapterRef>>(new Map())
 
-  // YOUR ORIGINAL BACKEND LOGIC - UNCHANGED
   useEffect(() => {
     fetchCourses()
+    fetchChapterMap()
   }, [])
+
+  // Arbre public Formation › Matière › Chapitre pour afficher le rattachement des cours
+  const fetchChapterMap = async () => {
+    try {
+      const res = await fetch('/api/subjects')
+      if (!res.ok) return
+      const tree = await res.json()
+      const map = new Map<string, ChapterRef>()
+      const walk = (chs: any[], subjectName: string, formationLabel: string) => {
+        for (const ch of chs ?? []) {
+          map.set(ch.id, { title: ch.title, subjectName, formationLabel })
+          if (ch.children?.length) walk(ch.children, subjectName, formationLabel)
+        }
+      }
+      for (const group of tree ?? []) {
+        for (const subject of group.subjects ?? []) {
+          walk(subject.chapters, subject.name, group.label || group.code)
+        }
+      }
+      setChapterMap(map)
+    } catch {
+      // secondaire : les cartes s'affichent quand même sans le badge chapitre
+    }
+  }
 
   const fetchCourses = async () => {
     try {
@@ -630,7 +670,7 @@ export default function CoursesPage() {
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {filteredCourses.map((course, index) => (
-              <CourseCard key={course.id} course={course} index={index} isPremium={isPremium} />
+              <CourseCard key={course.id} course={course} index={index} isPremium={isPremium} chapterRef={course.chapter_id ? chapterMap.get(course.chapter_id) : undefined} />
             ))}
           </motion.div>
         ) : (
