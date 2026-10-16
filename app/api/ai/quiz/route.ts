@@ -4,15 +4,12 @@ import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { QuizGenerator } from '@/lib/quiz-generator'
 import { RecommendationEngine } from '@/lib/recommendation-engine'
 import { hasCourseAccess } from '@/lib/subscription'
-import Groq from 'groq-sdk'
+import { groqChat } from '@/lib/groq'
 
 const quizGenerator = new QuizGenerator()
 const recommendationEngine = new RecommendationEngine()
 
-// Initialize Groq
-const groq = process.env.GROQ_API_KEY 
-  ? new Groq({ apiKey: process.env.GROQ_API_KEY })
-  : null
+const groq = process.env.GROQ_API_KEY ? true : null
 
 export async function POST(request: NextRequest) {
   try {
@@ -347,14 +344,13 @@ async function handleGenerateCourseQuiz(data: any, userId: string) {
     }
     
     try {
-      const chatCompletion = await groq.chat.completions.create({
+      const chatCompletion = await groqChat({
         messages: [
           {
             role: "user",
             content: prompt
           }
         ],
-        model: "llama-3.3-70b-versatile",
         temperature: 0.7,
         max_tokens: 4096,
         response_format: { type: "json_object" }

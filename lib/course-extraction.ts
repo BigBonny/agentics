@@ -7,7 +7,7 @@
  * le cours reste exploitable.
  */
 
-import Groq from 'groq-sdk'
+import { groqChat } from '@/lib/groq'
 import { supabaseAdmin } from '@/lib/supabase'
 
 const MAX_TEXT_CHARS = 25_000
@@ -82,10 +82,7 @@ function fallbackChapters(text: string): StructuredChapter[] {
 
 /** Structure le texte avec Groq (llama-3.3-70b) — titre, métadonnées, chapitres. */
 async function structureWithLLM(text: string, hints: { title?: string }): Promise<StructuredCourse | null> {
-  const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY
-  if (!apiKey || !process.env.GROQ_API_KEY) return null
-
-  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+  if (!process.env.GROQ_API_KEY) return null
 
   const prompt = `Tu transformes le contenu brut d'un document de cours en structure pédagogique JSON.
 
@@ -122,8 +119,7 @@ Règles :
 - level/difficulty entre 1 et 10. duration_hours réaliste (peut être décimal).
 - Réponds en français sauf si le document est entièrement dans une autre langue.`
 
-  const completion = await groq.chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
+  const completion = await groqChat({
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.2,
     max_tokens: 8192,
