@@ -32,6 +32,13 @@ function isModelNotFound(error: any): boolean {
   )
 }
 
+/** Rate-limit TPM = quota par modèle : le modèle suivant a son propre compteur. */
+function isRetriable(error: any): boolean {
+  if (isModelNotFound(error)) return true
+  const code = error?.code || error?.error?.code
+  return code === 'rate_limit_exceeded' || error?.status === 413 || error?.status === 429
+}
+
 type ChatParams = {
   messages: Array<{ role: string; content: string }>
   temperature?: number
@@ -55,8 +62,8 @@ export async function groqChat(params: ChatParams): Promise<{ choices: Array<{ m
       return (await groq.chat.completions.create({ ...params, model } as any)) as any
     } catch (e: any) {
       lastError = e
-      if (!isModelNotFound(e)) throw e // erreur réelle (clé, quota, contenu) : on remonte
-      console.warn(`[groq] modèle ${model} indisponible, essai suivant`)
+      if (!isRetriable(e)) throw e // erreur réelle (clé, contenu) : on remonte
+      console.warn(`[groq] modèle ${model} indisponible/limité, essai suivant`)
     }
   }
   throw lastError

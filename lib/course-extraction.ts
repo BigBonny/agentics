@@ -10,7 +10,7 @@
 import { groqChat } from '@/lib/groq'
 import { supabaseAdmin } from '@/lib/supabase'
 
-const MAX_TEXT_CHARS = 25_000
+const MAX_TEXT_CHARS = 12_000 // ~3k tokens — le tier gratuit Groq plafonne à 8k TPM (input + max_tokens)
 const CHUNK_TARGET_CHARS = 2_000
 
 interface StructuredChapter {
@@ -122,7 +122,7 @@ Règles :
   const completion = await groqChat({
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.2,
-    max_tokens: 8192,
+    max_tokens: 3500,
     response_format: { type: 'json_object' },
   })
 

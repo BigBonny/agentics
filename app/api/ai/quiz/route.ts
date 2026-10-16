@@ -271,7 +271,8 @@ async function handleGenerateCourseQuiz(data: any, userId: string) {
     console.log('ai_extracted_content length:', course.ai_extracted_content?.length || 0)
 
     // Use extracted PDF content if available, otherwise use course metadata
-    const courseContent = course.ai_extracted_content || course.description || ''
+    // Cap à ~10k caractères (~2.5k tokens) pour rester sous la limite TPM du tier gratuit
+    const courseContent = (course.ai_extracted_content || course.description || '').slice(0, 10_000)
     
     console.log('Using course content for quiz generation:', courseContent ? 'Yes' : 'No')
     console.log('Content preview:', courseContent.substring(0, 200) + '...')
@@ -352,7 +353,7 @@ async function handleGenerateCourseQuiz(data: any, userId: string) {
           }
         ],
         temperature: 0.7,
-        max_tokens: 4096,
+        max_tokens: 3000,
         response_format: { type: "json_object" }
       })
       
