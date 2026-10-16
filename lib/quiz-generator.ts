@@ -1,9 +1,14 @@
 import OpenAI from 'openai'
 import { GeneratedQuiz, GeneratedQuestion } from '@/lib/types/course'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let _openai: OpenAI | null = null
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY non configurée')
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  }
+  return _openai
+}
 
 export class QuizGenerator {
   async generateQuizFromCourse(
@@ -46,7 +51,7 @@ export class QuizGenerator {
         Répondez en format JSON structuré.
       `
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4",
         messages: [
           {
@@ -119,7 +124,7 @@ export class QuizGenerator {
       `
 
       console.log('Making OpenAI API call...')
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4",
         messages: [
           {
@@ -179,7 +184,7 @@ export class QuizGenerator {
         Répondez en format JSON avec une liste d'exercices.
       `
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4",
         messages: [
           {
@@ -246,7 +251,7 @@ export class QuizGenerator {
         Répondez en format JSON structuré.
       `
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4",
         messages: [
           {

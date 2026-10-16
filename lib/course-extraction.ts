@@ -39,10 +39,12 @@ export async function extractText(buffer: Buffer, fileName: string, contentType:
     return buffer.toString('utf-8')
   }
   if (contentType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf')) {
-    const { PDFParse } = await import('pdf-parse')
-    const parser = new PDFParse({ data: buffer })
-    const result = await parser.getText()
-    await parser.destroy().catch(() => undefined)
+    // pdf-parse v1 (CJS, pdf.js embarqué) — v2 casse le build webpack (imports
+    // d'exports absents de pdfjs-dist 5.x). On importe le fichier lib pour
+    // éviter le mode debug de index.js.
+    const mod = await import('pdf-parse/lib/pdf-parse.js')
+    const pdfParse = (mod as any).default ?? mod
+    const result = await pdfParse(buffer)
     return result.text ?? ''
   }
   throw new Error(`Type de fichier non supporté : ${contentType} (${fileName})`)

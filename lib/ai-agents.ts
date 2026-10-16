@@ -1,8 +1,13 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+let _openai: OpenAI | null = null
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY non configurée')
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  }
+  return _openai
+}
 
 export interface EvaluationResult {
   score: number
@@ -66,7 +71,7 @@ export class EvaluatorAgent {
         Répondez en format JSON structuré.
       `
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4",
         messages: [
           {
@@ -100,7 +105,7 @@ export class EvaluatorAgent {
         Répondez avec une liste de lacunes conceptuelles.
       `
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4",
         messages: [
           {
@@ -159,7 +164,7 @@ export class CuratorAgent {
         Sélectionnez et adaptez le contenu le plus pertinent. Répondez en format JSON.
       `
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4",
         messages: [
           {
@@ -210,7 +215,7 @@ export class MentorAgent {
         Répondez en format JSON structuré.
       `
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4",
         messages: [
           {
@@ -252,7 +257,7 @@ export class MentorAgent {
         Répondez avec une liste d'exercices en format JSON.
       `
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4",
         messages: [
           {
@@ -302,7 +307,7 @@ export class MentorAgent {
         Répondez en format JSON.
       `
 
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: "gpt-4",
         messages: [
           {
