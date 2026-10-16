@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { adminGate } from '@/lib/admin'
 
 export async function POST(request: NextRequest) {
   try {
+      const denied = await adminGate()
+      if (denied) return denied
     console.log('Manual test: Inserting progress data...')
     
     const testData = {
@@ -74,6 +77,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+      const denied = await adminGate()
+      if (denied) return denied
     console.log('Manual test GET: Checking if we can read progress data...')
     
     const { data: progressData, error: progressError } = await supabase

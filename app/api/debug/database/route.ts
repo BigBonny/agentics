@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { adminGate } from '@/lib/admin'
+
+// Ne jamais pré-rendre : un snapshot statique exposerait les données de tous les utilisateurs.
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
+    const denied = await adminGate()
+    if (denied) return denied
+
     console.log('Checking all progress data...')
     
     // Get ALL progress data to see what's there

@@ -8,7 +8,8 @@ export const createCheckoutSessionWithPrice = async (
   customerId: string | null,
   userEmail: string,
   amount: number,
-  currency: string = 'eur'
+  currency: string = 'eur',
+  extraMetadata: Record<string, string> = {}
 ) => {
   try {
     const sessionParams: any = {
@@ -37,6 +38,7 @@ export const createCheckoutSessionWithPrice = async (
       allow_promotion_codes: true,
       metadata: {
         type: 'subscription',
+        ...extraMetadata,
       },
     }
 

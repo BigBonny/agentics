@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useUser } from '@clerk/nextjs'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { supabaseAdmin } from '../../lib/supabase'
+import { useCourseAccess } from '../../lib/premium'
 import {
   Sparkles, Crown, Star, TrendingUp, Clock, Award, Brain,
   Target, BookOpen, Zap, Lock, ArrowRight, CheckCircle,
@@ -51,74 +51,33 @@ export default function Dashboard() {
   })
 
   const isSuccess = searchParams.get('success') === 'true'
-  const hasSubscription = userData?.subscription_tier === 'premium'
+  const hasSubscription = useCourseAccess(user?.publicMetadata)
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         if (!user) {
-          setUserData({
-            clerk_id: 'test-user-id',
-            email: 'test@example.com',
-            first_name: 'Invité',
-            last_name: '',
-            subscription_tier: 'free',
-            subscription_status: 'active'
-          })
           setLoading(false)
           return
         }
 
-        // Create or fetch user
-        let userId: string | null = null
-        const { data: existingUser } = await supabaseAdmin
-          .from('users')
-          .select('*')
-          .eq('clerk_id', user.id)
-          .single()
+        const [statsRes, coursesRes] = await Promise.all([
+          fetch('/api/me/stats'),
+          fetch('/api/courses'),
+        ])
 
-        if (!existingUser) {
-          const { data: newUser } = await supabaseAdmin
-            .from('users')
-            .insert({
-              clerk_id: user.id,
-              email: user.emailAddresses?.[0]?.emailAddress || '',
-              first_name: user.firstName || '',
-              last_name: user.lastName || '',
-              subscription_tier: 'free',
-              subscription_status: 'active'
-            })
-            .select()
-            .single()
-          setUserData(newUser)
-          userId = newUser?.id || null
-        } else {
-          if (isSuccess) {
-            await supabaseAdmin
-              .from('users')
-              .update({ subscription_tier: 'premium', subscription_status: 'active' })
-              .eq('clerk_id', user.id)
-            existingUser.subscription_tier = 'premium'
-          }
-          setUserData(existingUser)
-          userId = existingUser?.id || null
+        if (statsRes.ok) {
+          const statsData = await statsRes.json()
+          setUserData(statsData.user)
+          if (statsData.stats) setUserStats(statsData.stats)
         }
 
-        // Fetch courses (all courses including unpublished)
-        const { data: coursesData } = await supabaseAdmin
-          .from('courses')
-          .select('*')
-        setCourses(coursesData || [])
-        
-        // Fetch real user progress and stats
-        if (userId) {
-          await fetchUserStats(userId)
+        if (coursesRes.ok) {
+          const coursesData = await coursesRes.json()
+          setCourses(Array.isArray(coursesData) ? coursesData : coursesData.courses || [])
         }
-        
-        // Fetch AI recommendations
-        if (user?.id) {
-          await fetchRecommendations()
-        }
+
+        await fetchRecommendations()
       } catch (error) {
         console.error('Error:', error)
       } finally {
@@ -127,84 +86,7 @@ export default function Dashboard() {
     }
 
     fetchUserData()
-  }, [user, isSuccess])
-  
-  const fetchUserStats = async (userId: string) => {
-    try {
-      // Fetch evaluations (quiz results)
-      const { data: evaluations } = await supabaseAdmin
-        .from('evaluations')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-      
-      // Fetch progress data
-      const { data: progressData } = await supabaseAdmin
-        .from('progress')
-        .select('*')
-        .eq('user_id', userId)
-      
-      // Fetch study sessions
-      const { data: studySessions } = await supabaseAdmin
-        .from('study_sessions')
-        .select('*')
-        .eq('user_id', userId)
-      
-      // Calculate real stats
-      const totalQuizzes = evaluations?.length || 0
-      const averageScore = evaluations && evaluations.length > 0
-        ? Math.round(evaluations.reduce((sum: number, e: any) => sum + (e.score / e.max_score * 100), 0) / evaluations.length)
-        : 0
-      
-      const studyTime = studySessions?.reduce((sum: number, s: any) => sum + (s.duration || 0), 0) || 0
-      
-      // Extract weaknesses and strengths from progress data
-      const weaknesses: string[] = []
-      const strengths: string[] = []
-      
-      progressData?.forEach((p: any) => {
-        if (p.mastery_level < 50) {
-          weaknesses.push(p.topic)
-        } else if (p.mastery_level > 75) {
-          strengths.push(p.topic)
-        }
-      })
-      
-      // Calculate streak (simplified - count consecutive days with activity)
-      const streak = Math.min(totalQuizzes, 7) // Simplified for now
-      
-      // Generate weekly progress from evaluations
-      const weeklyProgress = [
-        { day: 'Lun', score: 0 },
-        { day: 'Mar', score: 0 },
-        { day: 'Mer', score: 0 },
-        { day: 'Jeu', score: 0 },
-        { day: 'Ven', score: 0 },
-        { day: 'Sam', score: 0 },
-        { day: 'Dim', score: 0 }
-      ]
-      
-      // Fill in actual scores from evaluations (last 7 quizzes)
-      evaluations?.slice(0, 7).forEach((e: any, index: number) => {
-        const dayIndex = 6 - index
-        if (dayIndex >= 0) {
-          weeklyProgress[dayIndex].score = Math.round((e.score / e.max_score) * 100)
-        }
-      })
-      
-      setUserStats({
-        averageScore,
-        totalQuizzes,
-        studyTime: Math.round(studyTime / 60), // Convert to hours
-        streak,
-        weeklyProgress,
-        weaknesses: Array.from(new Set(weaknesses)).slice(0, 5),
-        strengths: Array.from(new Set(strengths)).slice(0, 5)
-      })
-    } catch (error) {
-      console.error('Error fetching user stats:', error)
-    }
-  }
+  }, [user])
   
   const fetchRecommendations = async () => {
     try {
@@ -298,15 +180,15 @@ export default function Dashboard() {
             {/* Stats Preview */}
             <div className="grid md:grid-cols-3 gap-6 mb-12">
               <div className="card-glass p-6 text-center">
-                <div className="text-4xl font-bold gradient-text mb-2">3/3</div>
-                <p className="text-gray-600">Quizzes utilisés ce mois</p>
+                <div className="text-4xl font-bold gradient-text mb-2">{userStats.totalQuizzes}</div>
+                <p className="text-gray-600">Quizzes complétés</p>
               </div>
               <div className="card-glass p-6 text-center">
-                <div className="text-4xl font-bold gradient-text mb-2">75%</div>
+                <div className="text-4xl font-bold gradient-text mb-2">{userStats.averageScore}%</div>
                 <p className="text-gray-600">Score moyen</p>
               </div>
               <div className="card-glass p-6 text-center">
-                <div className="text-4xl font-bold gradient-text mb-2">12h</div>
+                <div className="text-4xl font-bold gradient-text mb-2">{userStats.studyTime}h</div>
                 <p className="text-gray-600">Temps d'étude</p>
               </div>
             </div>
@@ -399,7 +281,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <p className="text-gray-600">
-                  Votre espace d'apprentissage personnalisé • Niveau: Intermédiaire
+                  Votre espace d'apprentissage personnalisé{userStats.totalQuizzes > 0 ? ` • Niveau: ${userStats.averageScore >= 80 ? 'Avancé' : userStats.averageScore >= 50 ? 'Intermédiaire' : 'Débutant'}` : ''}
                 </p>
               </div>
             </div>
@@ -443,12 +325,8 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-violet-600" />
-                    Progression de la Semaine
+                    Derniers Résultats
                   </h3>
-                  <span className="text-emerald-600 font-medium flex items-center gap-1">
-                    <TrendingUp className="h-4 w-4" />
-                    +23%
-                  </span>
                 </div>
                 <div className="h-48 flex items-end justify-between gap-2">
                   {userStats.weeklyProgress.map((day, i) => (

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { adminGate } from '@/lib/admin'
 
 export async function GET(request: NextRequest) {
   try {
+      const denied = await adminGate()
+      if (denied) return denied
     console.log('Checking ALL progress data in database...')
     
     // Get ALL progress data regardless of user_id

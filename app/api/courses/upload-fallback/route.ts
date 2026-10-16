@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/clerk'
 import { supabase } from '@/lib/supabase'
+import { adminGate } from '@/lib/admin'
 
 export async function POST(request: NextRequest) {
   try {
+      const denied = await adminGate()
+      if (denied) return denied
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -168,24 +171,11 @@ export async function POST(request: NextRequest) {
     console.log('✅ Course file uploaded successfully:', courseResult?.[0]?.id)
 
     // Trigger AI content extraction
-    setTimeout(async () => {
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
-        await fetch(`${baseUrl}/api/ai/extract-content`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            courseId: courseResult?.[0]?.id,
-            imageUrl: imageUrl,
-            contentType: file.type
-          })
-        })
-      } catch (error) {
-        console.error('❌ Error triggering AI extraction:', error)
-      }
-    }, 1000)
+    // Extraction synchrone (le setTimeout + self-fetch est gelé sur serverless)
+    if (courseResult?.[0]?.id && file) {
+      const { extractCourseContent } = await import('@/lib/course-extraction')
+      await extractCourseContent(courseResult?.[0]?.id, Buffer.from(await file.arrayBuffer()), file.name, file.type)
+    }
 
     return NextResponse.json({
       success: true,

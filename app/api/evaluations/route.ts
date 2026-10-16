@@ -12,10 +12,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
+    // Un utilisateur connecté ne peut écrire que pour son propre compte.
+    const sessionUser = await getCurrentUser()
+    if (sessionUser && sessionUser.id !== clerkId) {
+      return NextResponse.json({ error: 'Session invalide' }, { status: 403 })
+    }
+
     // Une complétion de cours (courseId) est une fonctionnalité premium :
     // session authentifiée + abonnement actif (ou admin) requis.
     if (courseId) {
-      const sessionUser = await getCurrentUser()
       if (!sessionUser || sessionUser.id !== clerkId) {
         return NextResponse.json({ error: 'Session invalide' }, { status: 401 })
       }
@@ -115,6 +120,13 @@ export async function GET(request: NextRequest) {
 
     if (!clerkId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    }
+
+    // Ne pas faire confiance au userId de la requête : il doit correspondre à la
+    // session (sinon n'importe qui peut lire les évaluations d'un autre compte).
+    const sessionUser = await getCurrentUser()
+    if (!sessionUser || sessionUser.id !== clerkId) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
     }
 
     // Get user from users table

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/clerk'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
     const courseId = searchParams.get('courseId')
 
     // Get user ID from Supabase
-    const { data: userData } = await supabase
-      .from('users')
+    const { data: userData } = await supabaseAdmin
+          .from('users')
       .select('id')
       .eq('clerk_id', user.id)
       .single()
@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    let query = supabase
-      .from('course_enrollments')
+    let query = supabaseAdmin
+          .from('course_enrollments')
       .select(`
         *,
         courses(*),
@@ -89,8 +89,8 @@ export async function POST(request: NextRequest) {
     const { courseId, contentId, completed, timeSpent } = await request.json()
 
     // Get user ID from Supabase
-    const { data: userData } = await supabase
-      .from('users')
+    const { data: userData } = await supabaseAdmin
+          .from('users')
       .select('id')
       .eq('clerk_id', user.id)
       .single()
@@ -100,8 +100,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Update course progress
-    const { data: progress, error } = await supabase
-      .from('course_progress')
+    const { data: progress, error } = await supabaseAdmin
+          .from('course_progress')
       .upsert({
         user_id: userData.id,
         course_id: courseId,
@@ -118,14 +118,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Update enrollment progress and last accessed
-    const { data: allProgress } = await supabase
-      .from('course_progress')
+    const { data: allProgress } = await supabaseAdmin
+          .from('course_progress')
       .select('*')
       .eq('user_id', userData.id)
       .eq('course_id', courseId)
 
-    const totalContent = await supabase
-      .from('course_content')
+    const totalContent = await supabaseAdmin
+          .from('course_content')
       .select('id')
       .eq('course_id', courseId)
 
@@ -133,8 +133,8 @@ export async function POST(request: NextRequest) {
     const totalCount = totalContent.data?.length || 0
     const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
-    await supabase
-      .from('course_enrollments')
+    await supabaseAdmin
+          .from('course_enrollments')
       .update({
         progress_percentage: Math.round(progressPercentage),
         last_accessed_at: new Date().toISOString()
@@ -143,8 +143,8 @@ export async function POST(request: NextRequest) {
       .eq('course_id', courseId)
 
     // Update overall progress table
-    await supabase
-      .from('progress')
+    await supabaseAdmin
+          .from('progress')
       .upsert({
         user_id: userData.id,
         course_id: courseId,

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { adminGate } from '@/lib/admin'
 
 export async function GET(request: NextRequest) {
   try {
+      const denied = await adminGate()
+      if (denied) return denied
     console.log('Simple debug: Testing database connection...')
     
     // Test basic connection

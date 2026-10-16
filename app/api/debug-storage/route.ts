@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { adminGate } from '@/lib/admin'
 
 export async function GET() {
   const debugInfo = {
@@ -9,6 +10,8 @@ export async function GET() {
   }
 
   try {
+      const denied = await adminGate()
+      if (denied) return denied
     // Step 1: Check buckets
     debugInfo.steps.push("Checking buckets...")
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets()

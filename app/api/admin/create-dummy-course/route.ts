@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { adminGate } from '@/lib/admin'
 
 export async function POST(request: NextRequest) {
   try {
+      const denied = await adminGate()
+      if (denied) return denied
     const dummyCourse = {
       title: 'Introduction aux Mathématiques',
       description: 'Un cours complet sur les fondamentaux des mathématiques, incluant l\'algèbre, la géométrie et les fonctions.',

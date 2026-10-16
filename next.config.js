@@ -13,20 +13,9 @@ const nextConfig = {
       '/api/courses/upload': ['./node_modules/**/pdf-parse/**'],
     },
   },
-  env: {
-    // Make sure these are loaded
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-    NEXT_PUBLIC_CLERK_WEBHOOK_SECRET: process.env.NEXT_PUBLIC_CLERK_WEBHOOK_SECRET,
-    CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
-    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
-    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-  }
+  // NE PAS ajouter de bloc `env` ici : les variables listées sont inlinées dans
+  // le bundle CLIENT, ce qui exposerait les secrets (service-role, Stripe…).
+  // Next charge .env* et les env vars automatiquement côté serveur.
 }
 
 module.exports = nextConfig

@@ -54,9 +54,9 @@ export async function hasCourseAccess(userId?: string): Promise<boolean> {
 }
 
 export async function canAccessRecommendations(userId?: string): Promise<boolean> {
-  return await hasActiveSubscription(userId)
+  return await hasCourseAccess(userId)
 }
 
 export async function canAccessCourseLibrary(userId?: string): Promise<boolean> {
-  return await hasActiveSubscription(userId)
+  return await hasCourseAccess(userId)
 }

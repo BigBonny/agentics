@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/clerk'
 import { supabase } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
     const { clerk_id, email, first_name, last_name } = await request.json()
+
+    // Un utilisateur ne peut synchroniser que son propre compte
+    const sessionUser = await getCurrentUser()
+    if (!sessionUser) {
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    }
+    if (clerk_id !== sessionUser.id) {
+      return NextResponse.json({ error: 'Interdit' }, { status: 403 })
+    }
 
     console.log('🔔 Sync user request:', { clerk_id, email, first_name, last_name })
 

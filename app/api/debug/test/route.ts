@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { adminGate } from '@/lib/admin'
 
 export async function GET(request: NextRequest) {
   try {
+      const denied = await adminGate()
+      if (denied) return denied
     console.log('Simple test: API is working')
     return NextResponse.json({ 
       message: 'API is working',
@@ -18,6 +21,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+      const denied = await adminGate()
+      if (denied) return denied
     console.log('Simple POST test: API is working')
     const body = await request.json()
     return NextResponse.json({ 

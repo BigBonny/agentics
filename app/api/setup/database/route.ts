@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { adminGate } from '@/lib/admin'
 
 export async function POST(request: NextRequest) {
   try {
+      const denied = await adminGate()
+      if (denied) return denied
     // Create quiz_attempts table
     const { error: quizAttemptsError } = await supabase.rpc('exec_sql', {
       sql: `

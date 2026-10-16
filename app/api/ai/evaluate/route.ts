@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/clerk'
+import { hasCourseAccess } from '@/lib/subscription'
 import { AgenticsSystem } from '@/lib/ai-agents'
 import { supabase } from '@/lib/supabase'
 
@@ -9,6 +10,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+      if (!(await hasCourseAccess(user.id))) {
+        return NextResponse.json({ error: 'Abonnement premium requis', upgrade: true }, { status: 402 })
+      }
 
     const { question, userResponse, subject, difficulty } = await request.json()
 

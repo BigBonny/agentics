@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { getCurrentUser } from '@/lib/clerk'
+import { hasCourseAccess } from '@/lib/subscription'
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (!(await hasCourseAccess(user.id))) {
+      return NextResponse.json({ error: 'Abonnement premium requis', upgrade: true }, { status: 402 })
+    }
+
     const { type, data } = await request.json()
 
     console.log('AI content request:', { type, data })

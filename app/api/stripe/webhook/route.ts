@@ -30,12 +30,21 @@ export async function POST(request: NextRequest) {
 
         console.log('💳 Payment completed:', { customerId, subscriptionId })
 
-        // Find user by Stripe customer ID
-        const { data: userData } = await supabase
+        // Find user by Stripe customer ID, fallback sur le clerk_id en metadata
+        let { data: userData } = await supabase
           .from('users')
           .select('clerk_id')
           .eq('stripe_customer_id', customerId)
           .single()
+
+        if (!userData && session.metadata?.clerk_id) {
+          const res = await supabase
+            .from('users')
+            .select('clerk_id')
+            .eq('clerk_id', session.metadata.clerk_id)
+            .single()
+          userData = res.data
+        }
 
         if (userData) {
           // Update user subscription in Clerk

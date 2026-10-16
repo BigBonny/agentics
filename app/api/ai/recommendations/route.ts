@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/clerk'
+import { hasCourseAccess } from '@/lib/subscription'
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,6 +9,9 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+      if (!(await hasCourseAccess(user.id))) {
+        return NextResponse.json({ error: 'Abonnement premium requis', upgrade: true }, { status: 402 })
+      }
 
     // Get user data from Supabase
     const { data: userData } = await supabaseAdmin
