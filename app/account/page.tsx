@@ -25,6 +25,7 @@ import {
   Flame
 } from 'lucide-react'
 import NewHeader from '../../components/NewHeader'
+import { useCourseAccess } from '../../lib/premium'
 
 interface UserStats {
   quizzesTaken: number
@@ -33,6 +34,25 @@ interface UserStats {
   streakDays: number
   lastActive: string
   averageScore: number
+}
+
+interface Activity {
+  action: string
+  subject: string
+  score: string | null
+  time: string
+  color: string
+}
+
+function relativeTime(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const min = Math.floor(diff / 60000)
+  if (min < 60) return min <= 1 ? "À l'instant" : `Il y a ${min} min`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `Il y a ${h} heure${h > 1 ? 's' : ''}`
+  const d = Math.floor(h / 24)
+  if (d < 30) return `Il y a ${d} jour${d > 1 ? 's' : ''}`
+  return new Date(dateStr).toLocaleDateString('fr-FR')
 }
 
 interface Badge {
@@ -46,6 +66,7 @@ interface Badge {
 
 export default function AccountPage() {
   const { user, isSignedIn, isLoaded } = useUser()
+  const hasPremiumAccess = useCourseAccess(user?.publicMetadata)
   const { signOut } = useClerk()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'overview' | 'stats'>('overview')
@@ -60,6 +81,7 @@ export default function AccountPage() {
     lastActive: '-',
     averageScore: 0
   })
+  const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
 
   const getBadges = (stats: UserStats): Badge[] => [
@@ -145,6 +167,16 @@ export default function AccountPage() {
           lastActive,
           averageScore
         })
+
+        setActivities(
+          evaluations.slice(0, 5).map((e: any) => ({
+            action: 'Quiz complété',
+            subject: e.subject || 'Quiz',
+            score: e.max_score ? `${Math.round((e.score / e.max_score) * 100)}%` : `${e.score} pts`,
+            time: relativeTime(e.created_at),
+            color: 'from-green-500 to-emerald-500',
+          }))
+        )
       } else {
         // If no evaluations, show enrollment stats
         setStats(prev => ({
@@ -214,8 +246,10 @@ export default function AccountPage() {
                 {/* User Info */}
                 <div className="flex-1 text-center md:text-left">
                   <div className="flex items-center justify-center md:justify-start gap-2 sm:gap-3 mb-1 sm:mb-2">
-                    <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-300" />
-                    <span className="text-white/80 text-xs sm:text-sm font-medium">Membre Premium</span>
+                    <Crown className={`w-5 h-5 sm:w-6 sm:h-6 ${hasPremiumAccess ? 'text-yellow-300' : 'text-white/50'}`} />
+                    <span className="text-white/80 text-xs sm:text-sm font-medium">
+                      {hasPremiumAccess ? 'Membre Premium' : 'Compte Gratuit'}
+                    </span>
                   </div>
                   
                   {isEditing ? (
@@ -408,11 +442,12 @@ export default function AccountPage() {
                       </div>
 
                       <div className="space-y-3 sm:space-y-4">
-                        {[
-                          { action: 'Quiz complété', subject: 'Mathématiques Avancées', score: '85%', time: 'Il y a 2 heures', color: 'from-green-500 to-emerald-500' },
-                          { action: 'Cours rejoint', subject: 'Physique Quantique', score: null, time: 'Il y a 1 jour', color: 'from-blue-500 to-cyan-500' },
-                          { action: 'Badge obtenu', subject: 'Maître du Score', score: null, time: 'Il y a 2 jours', color: 'from-amber-500 to-orange-500' }
-                        ].map((activity, index) => (
+                        {activities.length === 0 && !loading && (
+                          <p className="text-sm text-gray-500 text-center py-6">
+                            Aucune activité pour le moment — complétez un quiz pour la voir apparaître ici.
+                          </p>
+                        )}
+                        {activities.map((activity, index) => (
                           <div key={index} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-xl sm:rounded-2xl">
                             <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${activity.color} flex items-center justify-center flex-shrink-0`}>
                               <Target className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
