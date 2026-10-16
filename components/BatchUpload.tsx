@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Upload, X, Loader2, CheckCircle, AlertCircle, BookOpen, FileText } from 'lucide-react'
 
 interface BatchUploadProps {
@@ -15,7 +15,32 @@ export default function BatchUpload({ onUploadComplete, onCancel }: BatchUploadP
   const [success, setSuccess] = useState('')
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [courseMetadata, setCourseMetadata] = useState<{ [key: string]: any }>({})
+  const [chapterOptions, setChapterOptions] = useState<{ id: string; label: string }[]>([])
+  const [selectedChapter, setSelectedChapter] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Arbre Formation › Matière › Chapitre pour permettre le rattachement au
+  // moment de l'upload (comme sur /admin/subjects).
+  useEffect(() => {
+    fetch('/api/admin/subjects')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const options: { id: string; label: string }[] = []
+        const walk = (chs: any[], prefix: string) => {
+          for (const c of chs ?? []) {
+            options.push({ id: c.id, label: prefix + c.title })
+            if (c.children?.length) walk(c.children, prefix + c.title + ' › ')
+          }
+        }
+        for (const g of data?.tree ?? []) {
+          for (const s of g.subjects ?? []) {
+            walk(s.chapters, `${g.label || g.code} › ${s.name} › `)
+          }
+        }
+        setChapterOptions(options)
+      })
+      .catch(() => undefined)
+  }, [])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
@@ -34,28 +59,21 @@ export default function BatchUpload({ onUploadComplete, onCancel }: BatchUploadP
     setSelectedFiles(validFiles)
     setError('')
     
-    // Auto-generate metadata for each file
+    // Métadonnées minimales : les champs vides sont remplis par l'IA à
+    // l'extraction. Ne pas pré-remplir topics/objectifs/prérequis avec des
+    // valeurs fictives (elles empêcheraient l'IA de générer les vraies).
     const metadata: { [key: string]: any } = {}
-    validFiles.forEach((file, index) => {
-      const fileExt = file.name.split('.').pop()?.toLowerCase()
-      const fileType = fileExt === 'txt' || file.type === 'text/plain' ? 'TXT' : 
-                     file.type === 'application/pdf' || fileExt === 'pdf' ? 'PDF' : 'image'
-      
+    validFiles.forEach((file) => {
       metadata[file.name] = {
-        title: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
-        description: `Cours basé sur ${fileType}: ${file.name}`,
-        subject: 'général',
+        title: file.name,
+        description: '',
+        subject: '',
         level: 5,
         difficulty: 5,
         duration_hours: 10,
-        topics: ['Mathématiques', 'Physique', 'Chimie'],
-        learning_objectives: [
-          'Comprendre les concepts fondamentaux',
-          'Maîtriser les techniques de résolution',
-          'Appliquer les connaissances pratiques'
-        ],
-        prerequisites: ['Notions de base'],
-        extracted_from: fileType.toLowerCase()
+        topics: [],
+        learning_objectives: [],
+        prerequisites: [],
       }
     })
     setCourseMetadata(metadata)
@@ -99,6 +117,7 @@ export default function BatchUpload({ onUploadComplete, onCancel }: BatchUploadP
         formData.append('learning_objectives', JSON.stringify(metadata.learning_objectives || []))
         formData.append('prerequisites', JSON.stringify(metadata.prerequisites || []))
         formData.append('courseId', 'new')
+        if (selectedChapter) formData.append('chapterId', selectedChapter)
 
         const response = await fetch('/api/working-upload', {
           method: 'POST',
@@ -192,6 +211,29 @@ export default function BatchUpload({ onUploadComplete, onCancel }: BatchUploadP
             </div>
             <p className="text-xs text-gray-500 mt-1">
               Formats acceptés: PDF, TXT, JPG, PNG, GIF (PDF/TXT max 50MB, images max 10MB)
+            </p>
+          </div>
+
+          {/* Rattachement à un chapitre */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Rattacher à un chapitre (optionnel)
+            </label>
+            <select
+              value={selectedChapter}
+              onChange={(e) => setSelectedChapter(e.target.value)}
+              disabled={uploading}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white disabled:opacity-50"
+            >
+              <option value="">— Non rattaché —</option>
+              {chapterOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Le chapitre choisi s'applique à tous les fichiers de ce lot.
             </p>
           </div>
 

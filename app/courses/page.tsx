@@ -219,34 +219,6 @@ const CourseCard = ({ course, index, isPremium, chapterRef }: { course: Course; 
             </div>
           </div>
 
-          {/* Chapters Section */}
-          {course.topics && course.topics.length > 0 && (
-            <div className="mb-6">
-              <div className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-2">
-                <BookOpen className="w-3 h-3" />
-                <span>{course.topics.length} Chapitre{course.topics.length > 1 ? 's' : ''}</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {course.topics.slice(0, 3).map((topic, i) => (
-                  <motion.span
-                    key={i}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1 * i }}
-                    className="px-2.5 py-1 bg-violet-50 text-violet-700 text-xs rounded-md border border-violet-200 hover:border-violet-300 transition-colors"
-                  >
-                    {topic}
-                  </motion.span>
-                ))}
-                {course.topics.length > 3 && (
-                  <span className="px-2.5 py-1 text-violet-500 text-xs">
-                    +{course.topics.length - 3} plus
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Prerequisites Preview */}
           {course.prerequisites && course.prerequisites.length > 0 && (
             <div className="mb-4">

@@ -181,10 +181,18 @@ export async function extractCourseContent(
       extraction_confidence: structured ? 0.9 : 0.5,
       updated_at: new Date().toISOString(),
     }
+    const cleanFileName = fileName.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
+    const placeholderTitle =
+      !course?.title ||
+      course.title === 'Test Course' ||
+      course.title === fileName ||
+      course.title === cleanFileName
     if (structured) {
-      if (!course?.title || course.title === 'Test Course' || course.title === fileName) update.title = structured.title
-      if (!course?.description) update.description = structured.description
-      if (!course?.subject || course.subject === 'general') update.subject = structured.subject
+      if (placeholderTitle) update.title = structured.title
+      if (!course?.description || course.description.startsWith('Cours basé sur'))
+        update.description = structured.description
+      if (!course?.subject || ['general', 'général'].includes(course.subject.toLowerCase()))
+        update.subject = structured.subject
       if (!course?.topics?.length && structured.topics?.length) update.topics = structured.topics
       if (!course?.learning_objectives?.length && structured.learning_objectives?.length)
         update.learning_objectives = structured.learning_objectives
