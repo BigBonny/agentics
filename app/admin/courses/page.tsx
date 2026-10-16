@@ -20,7 +20,7 @@ import {
   Square,
   GraduationCap,
 } from 'lucide-react'
-import Header from '../../../components/Header'
+import Header from '../../../components/NewHeader'
 import BatchUpload from '../../../components/BatchUpload'
 
 interface Course {

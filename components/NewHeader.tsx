@@ -7,7 +7,7 @@ import { useUser, SignOutButton } from '@clerk/nextjs'
 import { useRouter, usePathname } from 'next/navigation'
 
 // Pages with light backgrounds that need dark header text
-const lightBgPages = ['/dashboard', '/pricing', '/quiz', '/quiz/guest', '/courses', '/subjects', '/sign-up', '/sign-in', '/account']
+const lightBgPages = ['/dashboard', '/pricing', '/quiz', '/quiz/guest', '/courses', '/subjects', '/sign-up', '/sign-in', '/account', '/admin']
 
 export default function NewHeader() {
   const [isScrolled, setIsScrolled] = useState(false)

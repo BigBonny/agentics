@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import NewHeader from '../../components/NewHeader'
 import NewFooter from '../../components/NewFooter'
-import { isPremiumMetadata } from '../../lib/premium'
+import { useCourseAccess } from '../../lib/premium'
 
 interface Course {
   id: string
@@ -405,7 +405,7 @@ const CourseSkeleton = () => (
 
 export default function CoursesPage() {
   const { isSignedIn, user } = useUser()
-  const isPremium = isPremiumMetadata(user?.publicMetadata)
+  const isPremium = useCourseAccess(user?.publicMetadata)
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

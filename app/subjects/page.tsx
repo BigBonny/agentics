@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import NewHeader from '../../components/NewHeader'
 import NewFooter from '../../components/NewFooter'
-import { isPremiumMetadata } from '../../lib/premium'
+import { useCourseAccess } from '../../lib/premium'
 
 interface Chapter {
   id: string
@@ -60,7 +60,7 @@ const typeLabels: Record<string, string> = {
 
 export default function SubjectsPage() {
   const { user } = useUser()
-  const isPremium = isPremiumMetadata(user?.publicMetadata)
+  const isPremium = useCourseAccess(user?.publicMetadata)
   const [tree, setTree] = useState<FormationGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -23,8 +23,9 @@ import {
   EyeOff,
   ArrowLeft,
   Search,
+  Upload,
 } from 'lucide-react'
-import Header from '../../../components/Header'
+import Header from '../../../components/NewHeader'
 
 interface LinkedCourse {
   id: string
@@ -438,6 +439,7 @@ export default function AdminSubjects() {
                                       )
                                     }
                                     onDetachCourse={(courseId) => detachCourse(chapter.id, courseId)}
+                                    onUploaded={fetchTree}
                                     attachOpen={attachChapterId === chapter.id}
                                     editing={editingChapter?.id === chapter.id}
                                     editForm={
@@ -495,6 +497,7 @@ function ChapterRow({
   onAttach,
   onCreateCourse,
   onDetachCourse,
+  onUploaded,
   attachOpen,
   editing,
   editForm,
@@ -510,6 +513,7 @@ function ChapterRow({
   onAttach: () => void
   onCreateCourse: () => void
   onDetachCourse: (courseId: string) => void
+  onUploaded: () => void
   attachOpen: boolean
   editing: boolean
   editForm: React.ReactNode
@@ -517,6 +521,31 @@ function ChapterRow({
   onPickCourse: (courseId: string) => void
   typeLabels: Record<string, string>
 }) {
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const uploadPdf = async (file: File) => {
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('title', file.name.replace(/\.[^.]+$/, ''))
+      fd.append('chapterId', chapter.id)
+      const res = await fetch('/api/working-upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur de téléversement')
+      if (data.extraction_status === 'failed') {
+        alert(`Cours créé mais l'extraction IA a échoué — réessayez depuis la page cours.`)
+      }
+      onUploaded()
+    } catch (e: any) {
+      alert(e.message)
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
   return (
     <div className="bg-white rounded-xl border border-gray-200">
       <div className="flex items-center p-3 cursor-pointer hover:bg-gray-50 transition-colors" onClick={onToggle}>
@@ -539,8 +568,26 @@ function ChapterRow({
         </div>
         <span className="text-xs text-gray-400 mr-2">{chapter.courses.length} cours</span>
         <div className="flex space-x-1" onClick={(e) => e.stopPropagation()}>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.txt"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) uploadPdf(f)
+            }}
+          />
           <button onClick={onAttach} className="p-1.5 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50" title="Rattacher un cours">
             <Link2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 disabled:opacity-50"
+            title="Téléverser un PDF dans ce chapitre"
+          >
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
           </button>
           <button onClick={onCreateCourse} className="p-1.5 text-gray-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50" title="Créer un cours">
             <Plus className="w-4 h-4" />

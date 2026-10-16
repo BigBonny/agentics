@@ -69,6 +69,7 @@ const patchSchema = z.object({
   difficulty: z.number().int().min(1).max(10).optional(),
   duration_hours: z.number().min(0).optional(),
   is_published: z.boolean().optional(),
+  chapter_id: z.string().uuid().nullable().optional(),
 })
 
 /** PATCH /api/admin/courses/[id] — met à jour les métadonnées du cours. */

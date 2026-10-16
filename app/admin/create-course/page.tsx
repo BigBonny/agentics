@@ -16,7 +16,7 @@ import {
   ListChecks,
 } from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
-import Header from '../../../components/Header'
+import Header from '../../../components/NewHeader'
 
 const SUBJECTS = [
   'mathématiques',

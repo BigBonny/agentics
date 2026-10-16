@@ -15,7 +15,7 @@ import {
   X,
   Loader2,
 } from 'lucide-react'
-import Header from '../../../../components/Header'
+import Header from '../../../../components/NewHeader'
 
 interface Chapter {
   id: string
@@ -35,7 +35,13 @@ interface Course {
   difficulty: number
   duration_hours: number
   is_published: boolean
+  chapter_id: string | null
   chapters: Chapter[]
+}
+
+interface SubjectChapterOption {
+  id: string
+  label: string // "Matière › Chapitre"
 }
 
 const CHAPTER_TYPES = [
@@ -54,11 +60,36 @@ export default function CourseEditor({ params }: { params: { id: string } }) {
   const [error, setError] = useState('')
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null)
   const [newChapter, setNewChapter] = useState(false)
-  const [form, setForm] = useState({ title: '', description: '', subject: '', level: 1, difficulty: 5, duration_hours: 0, is_published: false })
+  const [chapterOptions, setChapterOptions] = useState<SubjectChapterOption[]>([])
+  const [form, setForm] = useState({ title: '', description: '', subject: '', level: 1, difficulty: 5, duration_hours: 0, is_published: false, chapter_id: '' })
 
   useEffect(() => {
     fetchCourse()
+    fetchChapterOptions()
   }, [id])
+
+  const fetchChapterOptions = async () => {
+    try {
+      const res = await fetch('/api/admin/subjects')
+      if (!res.ok) return
+      const { tree } = await res.json()
+      const opts: SubjectChapterOption[] = []
+      for (const group of tree ?? []) {
+        for (const subject of group.subjects ?? []) {
+          const collect = (chs: any[], prefix: string) => {
+            for (const ch of chs) {
+              opts.push({ id: ch.id, label: `${group.code} › ${subject.name} › ${prefix}${ch.title}` })
+              collect(ch.children ?? [], `${prefix}${ch.title} › `)
+            }
+          }
+          collect(subject.chapters ?? [], '')
+        }
+      }
+      setChapterOptions(opts)
+    } catch {
+      // options facultatives
+    }
+  }
 
   const fetchCourse = async () => {
     try {
@@ -75,6 +106,7 @@ export default function CourseEditor({ params }: { params: { id: string } }) {
         difficulty: data.difficulty ?? 5,
         duration_hours: data.duration_hours ?? 0,
         is_published: !!data.is_published,
+        chapter_id: data.chapter_id || '',
       })
     } catch (e: any) {
       setError(e.message)
@@ -91,6 +123,7 @@ export default function CourseEditor({ params }: { params: { id: string } }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          chapter_id: form.chapter_id || null,
           level: Number(form.level),
           difficulty: Number(form.difficulty),
           duration_hours: Number(form.duration_hours),
@@ -125,7 +158,7 @@ export default function CourseEditor({ params }: { params: { id: string } }) {
   }
 
   const deleteChapter = async (contentId: string) => {
-    if (!confirm('Supprimer ce chapitre ?')) return
+    if (!confirm('Supprimer cette section ?')) return
     const res = await fetch(`/api/admin/courses/${id}/content?contentId=${contentId}`, { method: 'DELETE' })
     if (res.ok) await fetchCourse()
     else alert((await res.json()).error || 'Erreur de suppression')
@@ -188,6 +221,21 @@ export default function CourseEditor({ params }: { params: { id: string } }) {
                   <input type="checkbox" className="w-4 h-4" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} />
                   <span>Publié</span>
                 </label>
+                <div className="md:col-span-2">
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Chapitre de rattachement (Matière › Chapitre — géré dans l'onglet Matières)
+                  </label>
+                  <select
+                    className="border rounded-lg px-3 py-2 w-full"
+                    value={form.chapter_id}
+                    onChange={(e) => setForm({ ...form, chapter_id: e.target.value })}
+                  >
+                    <option value="">— Non rattaché —</option>
+                    {chapterOptions.map((o) => (
+                      <option key={o.id} value={o.id}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <button onClick={saveCourse} disabled={saving} className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center disabled:opacity-50">
                 <Save className="w-4 h-4 mr-2" /> {saving ? 'Enregistrement…' : 'Enregistrer le cours'}
@@ -197,9 +245,9 @@ export default function CourseEditor({ params }: { params: { id: string } }) {
             {/* Chapitres */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Chapitres ({course.chapters.length})</h2>
+                <h2 className="text-lg font-semibold">Sections du cours ({course.chapters.length})</h2>
                 <button onClick={() => setNewChapter(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center">
-                  <Plus className="w-4 h-4 mr-1" /> Ajouter un chapitre
+                  <Plus className="w-4 h-4 mr-1" /> Ajouter une section
                 </button>
               </div>
 
@@ -240,7 +288,7 @@ export default function CourseEditor({ params }: { params: { id: string } }) {
                   </div>
                 ))}
                 {course.chapters.length === 0 && (
-                  <p className="text-center text-gray-500 py-8 text-sm">Aucun chapitre — ajoutez-en un ou uploadez un PDF pour extraction automatique.</p>
+                  <p className="text-center text-gray-500 py-8 text-sm">Aucune section — ajoutez-en une ou uploadez un PDF pour extraction automatique.</p>
                 )}
               </div>
             </div>
@@ -270,13 +318,13 @@ function ChapterForm({
   return (
     <div className="p-4 space-y-3 bg-indigo-50/50">
       <div className="flex space-x-3">
-        <input className="border rounded-lg px-3 py-2 flex-1 bg-white" placeholder="Titre du chapitre" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+        <input className="border rounded-lg px-3 py-2 flex-1 bg-white" placeholder="Titre de la section" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
         <select className="border rounded-lg px-3 py-2 bg-white" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as Chapter['type'] })}>
           {CHAPTER_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
         <input type="number" min={0} className="border rounded-lg px-3 py-2 w-24 bg-white" placeholder="min" title="Durée (minutes)" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: +e.target.value })} />
       </div>
-      <textarea className="border rounded-lg px-3 py-2 w-full bg-white" placeholder="Contenu du chapitre" rows={6} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} />
+      <textarea className="border rounded-lg px-3 py-2 w-full bg-white" placeholder="Contenu de la section" rows={6} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} />
       <div className="flex space-x-2">
         <button onClick={() => onSave(form)} disabled={!form.title.trim()} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center disabled:opacity-50">
           <Save className="w-4 h-4 mr-2" /> Enregistrer
