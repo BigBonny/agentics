@@ -20,13 +20,27 @@ export async function GET(request: NextRequest) {
       }
       const { data: course, error } = await supabaseAdmin
         .from('courses')
-        .select('*, course_content (*)')
+        .select('*')
         .eq('id', id)
         .single()
-      if (error || !course) {
+      if (error?.code === 'PGRST116' || (!error && !course)) {
         return NextResponse.json({ error: 'Cours introuvable' }, { status: 404 })
       }
-      return NextResponse.json(course)
+      if (error) {
+        console.error('Course fetch error:', error)
+        return NextResponse.json({ error: error.message }, { status: 500 })
+      }
+
+      const { data: content, error: contentError } = await supabaseAdmin
+        .from('course_content')
+        .select('*')
+        .eq('course_id', id)
+        .order('order_index', { ascending: true })
+      if (contentError) {
+        console.error('Course content fetch error:', contentError)
+        return NextResponse.json({ ...course, course_content: [] })
+      }
+      return NextResponse.json({ ...course, course_content: content ?? [] })
     }
 
     const subject = searchParams.get('subject')
