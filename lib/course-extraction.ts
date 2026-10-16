@@ -152,7 +152,7 @@ export async function extractCourseContent(
   buffer: Buffer,
   fileName: string,
   contentType: string
-): Promise<void> {
+): Promise<{ status: 'completed' | 'failed'; error?: string }> {
   try {
     await supabaseAdmin.from('courses').update({ extraction_status: 'processing' }).eq('id', courseId)
 
@@ -162,8 +162,9 @@ export async function extractCourseContent(
         .from('courses')
         .update({ extraction_status: 'failed' })
         .eq('id', courseId)
-      console.error(`[extract] cours ${courseId} : texte insuffisant (${text.length} caractères)`)
-      return
+      const msg = `Texte insuffisant extrait (${text.length} caractères) — PDF scanné/image ou illisible`
+      console.error(`[extract] cours ${courseId} :`, msg)
+      return { status: 'failed', error: msg }
     }
 
     const structured = await structureWithLLM(text, { title: fileName })
@@ -213,8 +214,10 @@ export async function extractCourseContent(
     }
 
     console.log(`[extract] cours ${courseId} : ${chapters.length} chapitres, ${text.length} caractères`)
-  } catch (error) {
+    return { status: 'completed' }
+  } catch (error: any) {
     console.error('[extract] échec pour le cours', courseId, error)
     await supabaseAdmin.from('courses').update({ extraction_status: 'failed' }).eq('id', courseId)
+    return { status: 'failed', error: error?.message ?? String(error) }
   }
 }

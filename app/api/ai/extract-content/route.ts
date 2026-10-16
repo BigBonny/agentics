@@ -54,17 +54,12 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await fileData.arrayBuffer())
     const fileName = storagePath.split('/').pop() ?? 'fichier.pdf'
 
-    await extractCourseContent(courseId, buffer, fileName, contentType ?? '')
-
-    const { data: course } = await supabaseAdmin
-      .from('courses')
-      .select('extraction_status')
-      .eq('id', courseId)
-      .single()
+    const result = await extractCourseContent(courseId, buffer, fileName, contentType ?? '')
 
     return NextResponse.json({
-      success: course?.extraction_status === 'completed',
-      extraction_status: course?.extraction_status,
+      success: result.status === 'completed',
+      extraction_status: result.status,
+      extraction_error: result.error,
     })
   } catch (error: any) {
     console.error('❌ AI extraction error:', error)

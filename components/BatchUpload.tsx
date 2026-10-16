@@ -119,7 +119,7 @@ export default function BatchUpload({ onUploadComplete, onCancel }: BatchUploadP
       const failed = results.filter((r) => r.extraction_status === 'failed')
       setSuccess(
         failed.length
-          ? `⚠️ ${results.length - failed.length}/${results.length} cours analysés — ${failed.length} extraction(s) en échec (voir statut sur la carte).`
+          ? `⚠️ ${results.length - failed.length}/${results.length} cours analysés — échec : ${failed.map((f) => f.extraction_error || 'inconnu').join(' | ')}`
           : `✅ ${results.length} cours téléversés et analysés par l'IA !`
       )
       

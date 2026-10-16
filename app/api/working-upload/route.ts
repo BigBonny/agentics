@@ -126,22 +126,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Extraction synchrone : fiable sur serverless (vs setTimeout + self-fetch gelé après la réponse)
-    await extractCourseContent(course.id, buffer, file.name, file.type)
-
-    const { data: fresh } = await supabaseAdmin
-      .from('courses')
-      .select('extraction_status')
-      .eq('id', course.id)
-      .single()
+    const result = await extractCourseContent(course.id, buffer, file.name, file.type)
 
     return NextResponse.json({
-      success: fresh?.extraction_status === 'completed',
-      course: { ...course, extraction_status: fresh?.extraction_status },
-      extraction_status: fresh?.extraction_status,
+      success: result.status === 'completed',
+      course: { ...course, extraction_status: result.status },
+      extraction_status: result.status,
+      extraction_error: result.error,
       message:
-        fresh?.extraction_status === 'completed'
+        result.status === 'completed'
           ? 'Cours créé et contenu extrait'
-          : 'Cours créé — extraction du contenu en échec, réessayez via Ré-extraire',
+          : `Cours créé — extraction en échec : ${result.error}`,
     })
   } catch (error: any) {
     console.error('❌ Upload error:', error)
