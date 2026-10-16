@@ -49,23 +49,6 @@ interface ChapterRef {
   formationLabel: string
 }
 
-// Diploma levels hierarchy
-const diplomaLevels = [
-  { level: 1, name: 'Collège', range: '6ème - 3ème', color: 'bg-blue-500' },
-  { level: 2, name: 'Lycée', range: 'Seconde - Terminale', color: 'bg-emerald-500' },
-  { level: 3, name: 'Bac+1', range: 'Licence 1ère année', color: 'bg-amber-500' },
-  { level: 4, name: 'Bac+2', range: 'Licence 2ème/3ème année', color: 'bg-orange-500' },
-  { level: 5, name: 'Master', range: 'Master 1ère/2ème année', color: 'bg-purple-500' },
-]
-
-// Helper function to determine diploma from level
-const getDiplomaFromLevel = (level: number): string => {
-  if (level <= 3) return 'Collège'
-  if (level <= 6) return 'Lycée'
-  if (level <= 8) return 'Licence'
-  return 'Master'
-}
-
 // Animation variants for staggered grid
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -204,10 +187,6 @@ const CourseCard = ({ course, index, isPremium, chapterRef }: { course: Course; 
             >
               {course.subject}
             </motion.span>
-            <div className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-violet-100 to-purple-100 text-violet-700 border border-violet-200">
-              <GraduationCap className="w-3 h-3" />
-              <span>{getDiplomaFromLevel(course.level)}</span>
-            </div>
           </div>
 
           {/* Title */}
