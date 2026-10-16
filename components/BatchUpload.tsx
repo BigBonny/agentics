@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { Upload, X, Loader2, CheckCircle, AlertCircle, BookOpen, FileText } from 'lucide-react'
 
 interface BatchUploadProps {
-  onUploadComplete?: (courses: any[]) => void
+  onUploadComplete?: (result: { courses: any[]; hasFailures: boolean }) => void
   onCancel?: () => void
 }
 
@@ -117,15 +117,21 @@ export default function BatchUpload({ onUploadComplete, onCancel }: BatchUploadP
       
       setUploadProgress(100)
       const failed = results.filter((r) => r.extraction_status === 'failed')
-      setSuccess(
-        failed.length
-          ? `⚠️ ${results.length - failed.length}/${results.length} cours analysés — échec : ${failed.map((f) => f.extraction_error || 'inconnu').join(' | ')}`
-          : `✅ ${results.length} cours téléversés et analysés par l'IA !`
-      )
-      
-      setTimeout(() => {
-        onUploadComplete?.(results.map(r => r.course))
-      }, 2000)
+
+      if (failed.length) {
+        // En cas d'échec : message d'erreur persistant, pas d'auto-refresh qui
+        // l'effacerait. L'utilisateur lit puis recharge manuellement.
+        setError(
+          `Extraction échouée pour ${failed.length} fichier(s) : ` +
+            failed.map((f) => f.extraction_error || 'erreur inconnue').join(' | ')
+        )
+        onUploadComplete?.({ courses: results.map((r) => r.course), hasFailures: true })
+      } else {
+        setSuccess(`✅ ${results.length} cours téléversés et analysés par l'IA !`)
+        setTimeout(() => {
+          onUploadComplete?.({ courses: results.map((r) => r.course), hasFailures: false })
+        }, 2000)
+      }
 
     } catch (error: any) {
       setError('Erreur lors du téléversement: ' + error.message)

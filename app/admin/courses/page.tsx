@@ -464,8 +464,8 @@ export default function CourseManagement() {
       {showBatchUpload && (
         <BatchUpload
           onCancel={() => setShowBatchUpload(false)}
-          onUploadComplete={() => {
-            setShowBatchUpload(false)
+          onUploadComplete={({ hasFailures }) => {
+            if (!hasFailures) setShowBatchUpload(false)
             fetchCourses()
           }}
         />
