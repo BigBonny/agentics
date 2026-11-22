@@ -102,8 +102,6 @@ export default function CompleteCoursesPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-purple-50 pt-24 pb-12 px-4">
         {/* Animated Background */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '2s' }} />
         </div>
 
         <div className="max-w-2xl mx-auto relative z-10">

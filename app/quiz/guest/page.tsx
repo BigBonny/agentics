@@ -215,12 +215,9 @@ export default function GuestQuizPage() {
     return (
       <React.Fragment>
         <NewHeader />
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12 px-4 pt-24">
+        <div className="min-h-screen bg-paper py-12 px-4 pt-24">
         {/* Animated background elements */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '2s' }} />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '4s' }} />
         </div>
 
         <div className="max-w-6xl mx-auto relative z-10">
@@ -231,13 +228,13 @@ export default function GuestQuizPage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full text-blue-700 text-sm font-medium mb-6 shadow-sm">
+            <div className="inline-flex items-center gap-2 px-5 py-2 bg-violet-100 rounded-full text-blue-700 text-sm font-medium mb-6 shadow-sm">
               <Sparkles className="h-4 w-4" />
               <span>Évaluation Gratuite • Sans Inscription</span>
             </div>
             
-            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent mb-6">
-              Testez Vos Connaissances
+            <h1 className="text-5xl md:text-6xl font-bold text-ink mb-6">
+              Testez vos connaissances
             </h1>
             
             <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
@@ -277,7 +274,7 @@ export default function GuestQuizPage() {
                 <div className="bg-white rounded-[22px] p-8 h-full flex flex-col">
                   {/* Icon & Badge */}
                   <div className="flex items-start justify-between mb-6">
-                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${quiz.color} flex items-center justify-center text-white shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
+                    <div className={`w-16 h-16 rounded-2xl bg-violet-600 flex items-center justify-center text-white shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
                       {quiz.icon}
                     </div>
                     <span className={`px-4 py-1.5 rounded-full text-xs font-semibold ${quiz.bgColor} ${quiz.borderColor} border`}>
@@ -309,7 +306,7 @@ export default function GuestQuizPage() {
                   {/* CTA Button */}
                   <button
                     onClick={() => handleQuizSelect(quiz.id)}
-                    className={`w-full py-4 rounded-xl bg-gradient-to-r ${quiz.color} text-white font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 group/btn`}
+                    className={`w-full py-4 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 group/btn`}
                   >
                     <span>Commencer</span>
                     <ArrowRight className="h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
@@ -348,7 +345,7 @@ export default function GuestQuizPage() {
     return (
       <React.Fragment>
         <NewHeader />
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12 px-4 pt-24">
+        <div className="min-h-screen bg-paper py-12 px-4 pt-24">
         <div className="max-w-4xl mx-auto">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
@@ -357,7 +354,7 @@ export default function GuestQuizPage() {
             className="bg-white rounded-3xl shadow-2xl overflow-hidden"
           >
             {/* Results Header with Gradient */}
-            <div className={`relative bg-gradient-to-r ${quizResults.passed ? 'from-green-500 to-emerald-600' : 'from-orange-500 to-red-500'} p-8 text-white text-center`}>
+            <div className={`relative ${quizResults.passed ? 'bg-emerald-600' : 'bg-orange-600'} p-8 text-white text-center`}>
               <div className="absolute inset-0 bg-black/10" />
               
               <motion.div 
@@ -382,7 +379,7 @@ export default function GuestQuizPage() {
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-4 bg-gray-50 rounded-2xl px-8 py-4">
                   <div className="text-center">
-                    <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <div className="text-5xl font-bold text-violet-700">
                       {quizResults.scorePercentage}%
                     </div>
                     <div className="text-gray-500 mt-1">Score global</div>
@@ -405,7 +402,7 @@ export default function GuestQuizPage() {
               </div>
 
               {/* Account Creation CTA */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8 border border-blue-100">
+              <div className="bg-violet-50 rounded-2xl p-8 border border-blue-100">
                 <div className="flex items-center gap-3 mb-6">
                   <Sparkles className="h-8 w-8 text-yellow-500" />
                   <h3 className="text-2xl font-bold text-gray-900">
@@ -443,7 +440,7 @@ export default function GuestQuizPage() {
                 
                 <button
                   onClick={handleCreateAccount}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3"
+                  className="w-full py-4 rounded-xl bg-violet-600 text-white font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3"
                 >
                   <Sparkles className="h-6 w-6" />
                   <span>Créer mon compte gratuit</span>
@@ -479,7 +476,7 @@ export default function GuestQuizPage() {
   return (
     <React.Fragment>
       <NewHeader />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12 px-4 pt-24">
+      <div className="min-h-screen bg-paper py-12 px-4 pt-24">
       <div className="max-w-3xl mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -488,7 +485,7 @@ export default function GuestQuizPage() {
           className="bg-white rounded-3xl shadow-2xl overflow-hidden"
         >
           {/* Quiz Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+          <div className="bg-violet-600 p-6 text-white">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
@@ -603,7 +600,7 @@ export default function GuestQuizPage() {
                     disabled={!answers[currentQuestion] || loading}
                     className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-lg transition-all duration-300 transform hover:-translate-y-1 ${
                       answers[currentQuestion] && !loading
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:shadow-xl'
+                        ? 'bg-violet-600 text-white shadow-lg hover:shadow-xl'
                         : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                     }`}
                   >

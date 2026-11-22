@@ -202,7 +202,7 @@ export default function AccountPage() {
     return (
       <>
         <NewHeader />
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-purple-50 flex items-center justify-center pt-20">
+        <div className="min-h-screen bg-paper flex items-center justify-center pt-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600" />
         </div>
       </>
@@ -212,12 +212,9 @@ export default function AccountPage() {
   return (
     <>
       <NewHeader />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50 to-purple-50 pt-20 sm:pt-24 pb-8 sm:pb-12 px-3 sm:px-4">
+      <div className="min-h-screen bg-paper pt-20 sm:pt-24 pb-8 sm:pb-12 px-3 sm:px-4">
         {/* Animated Background */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '2s' }} />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '4s' }} />
         </div>
 
         <div className="max-w-6xl mx-auto relative z-10">
@@ -227,7 +224,7 @@ export default function AccountPage() {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden mb-8"
           >
-            <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-pink-500 p-4 sm:p-6 lg:p-8 text-white">
+            <div className="bg-violet-600 p-4 sm:p-6 lg:p-8 text-white">
               <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6">
                 {/* Avatar */}
                 <div className="relative">
@@ -331,7 +328,7 @@ export default function AccountPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="text-center p-3 sm:p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl sm:rounded-2xl border border-gray-100"
+                  className="text-center p-3 sm:p-4 bg-paper rounded-xl sm:rounded-2xl border border-gray-100"
                 >
                   <div className="text-violet-600 mb-1 sm:mb-2 flex justify-center">{stat.icon}</div>
                   <div className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value}</div>
@@ -351,7 +348,7 @@ export default function AccountPage() {
             >
               <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-4 sm:p-6">
                 <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-500 rounded-xl flex items-center justify-center">
                     <Award className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
                   <h2 className="text-lg sm:text-xl font-bold text-gray-900">Badges</h2>
@@ -366,13 +363,13 @@ export default function AccountPage() {
                       transition={{ delay: index * 0.1 }}
                       className={`p-4 rounded-2xl border transition-all ${
                         badge.earned
-                          ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
+                          ? 'bg-amber-50 border-amber-200'
                           : 'bg-gray-50 border-gray-200 opacity-50'
                       }`}
                     >
                       <div className="flex items-start gap-2 sm:gap-3">
                         <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          badge.earned ? 'bg-gradient-to-br from-amber-400 to-orange-500' : 'bg-gray-200'
+                          badge.earned ? 'bg-amber-500' : 'bg-gray-200'
                         }`}>
                           {badge.earned ? (
                             <span className="text-white">{badge.icon}</span>
@@ -411,7 +408,7 @@ export default function AccountPage() {
                     onClick={() => setActiveTab(tab.id as any)}
                     className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 sm:px-4 rounded-xl font-medium transition-all whitespace-nowrap text-xs sm:text-sm ${
                       activeTab === tab.id
-                        ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg'
+                        ? 'bg-violet-600 text-white shadow-lg'
                         : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
@@ -435,7 +432,7 @@ export default function AccountPage() {
                     {/* Recent Activity */}
                     <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-4 sm:p-6">
                       <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-violet-600 rounded-xl flex items-center justify-center">
                           <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                         </div>
                         <h2 className="text-lg sm:text-xl font-bold text-gray-900">Activité Récente</h2>
@@ -449,7 +446,7 @@ export default function AccountPage() {
                         )}
                         {activities.map((activity, index) => (
                           <div key={index} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-xl sm:rounded-2xl">
-                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${activity.color} flex items-center justify-center flex-shrink-0`}>
+                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0`}>
                               <Target className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -478,26 +475,26 @@ export default function AccountPage() {
                     className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/50 p-4 sm:p-6 space-y-4 sm:space-y-6"
                   >
                     <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-violet-600 rounded-xl flex items-center justify-center">
                         <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                       </div>
                       <h2 className="text-lg sm:text-xl font-bold text-gray-900">Vos Statistiques</h2>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="p-4 sm:p-6 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl sm:rounded-2xl border border-violet-100">
+                      <div className="p-4 sm:p-6 bg-paper rounded-xl sm:rounded-2xl border border-violet-100">
                         <div className="text-3xl sm:text-4xl font-bold text-violet-600 mb-1 sm:mb-2">{stats.averageScore}%</div>
                         <div className="text-gray-600 text-sm sm:text-base">Score moyen</div>
                       </div>
-                      <div className="p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl sm:rounded-2xl border border-blue-100">
+                      <div className="p-4 sm:p-6 bg-paper rounded-xl sm:rounded-2xl border border-blue-100">
                         <div className="text-3xl sm:text-4xl font-bold text-blue-600 mb-1 sm:mb-2">{stats.quizzesTaken}</div>
                         <div className="text-gray-600 text-sm sm:text-base">Quiz complétés</div>
                       </div>
-                      <div className="p-4 sm:p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl sm:rounded-2xl border border-amber-100">
+                      <div className="p-4 sm:p-6 bg-amber-50 rounded-xl sm:rounded-2xl border border-amber-100">
                         <div className="text-3xl sm:text-4xl font-bold text-amber-600 mb-1 sm:mb-2">{stats.streakDays}</div>
                         <div className="text-gray-600 text-sm sm:text-base">Jours de suite</div>
                       </div>
-                      <div className="p-4 sm:p-6 bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl sm:rounded-2xl border border-pink-100">
+                      <div className="p-4 sm:p-6 bg-paper rounded-xl sm:rounded-2xl border border-pink-100">
                         <div className="text-3xl sm:text-4xl font-bold text-pink-600 mb-1 sm:mb-2">{stats.totalPoints}</div>
                         <div className="text-gray-600 text-sm sm:text-base">Points totaux</div>
                       </div>

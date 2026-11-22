@@ -4,7 +4,7 @@ import { Sparkles, ArrowLeft } from 'lucide-react'
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50 relative">
+    <div className="min-h-screen bg-paper relative">
       {/* Back Button - Fixed position with high z-index */}
       <Link
         href="/"
@@ -18,7 +18,7 @@ export default function Page() {
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <div className="w-12 h-12 bg-violet-600 rounded-xl flex items-center justify-center shadow-lg">
             <Sparkles className="h-6 w-6 text-white" />
           </div>
           <span className="text-2xl font-bold text-gray-900">Agentics</span>
@@ -50,7 +50,7 @@ export default function Page() {
                 socialButtonsBlockButton: 'w-full py-3 px-4 bg-white border-2 border-gray-200 rounded-xl font-medium hover:border-violet-400 hover:bg-violet-50 transition-all',
                 formFieldLabel: 'text-gray-700 font-medium text-sm',
                 formFieldInput: 'w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent',
-                formButtonPrimary: 'w-full py-3 px-6 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-violet-500/25 transition-all mt-4',
+                formButtonPrimary: 'w-full py-3 px-6 bg-violet-600 text-white font-bold rounded-xl hover:shadow-lg hover:shadow-violet-500/25 transition-all mt-4',
                 footerActionText: 'text-gray-600 text-center text-sm',
                 footerActionLink: 'text-violet-600 font-semibold hover:text-violet-700',
                 identityPreviewEditButton: 'text-violet-600 font-medium hover:text-violet-700',

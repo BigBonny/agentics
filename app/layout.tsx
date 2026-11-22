@@ -1,13 +1,26 @@
 import './globals.css'
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
+import { Inter, Bricolage_Grotesque } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
+import MotionProvider from '../components/MotionProvider'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-sans' })
+const display = Bricolage_Grotesque({
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['600', '700', '800'],
+  variable: '--font-display',
+})
 
 export const metadata: Metadata = {
   title: 'Agentics Révision - Plateforme d\'Apprentissage Personnalisé',
   description: 'Surmontez vos lacunes académiques et réussissez vos examens nationaux avec notre IA adaptative',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#fbf9f4',
 }
 
 export default function RootLayout({
@@ -47,8 +60,8 @@ export default function RootLayout({
             `
           }} />
         </head>
-        <body className={inter.className} suppressHydrationWarning={true}>
-          {children}
+        <body className={`${inter.variable} ${display.variable} font-sans`} suppressHydrationWarning={true}>
+          <MotionProvider>{children}</MotionProvider>
         </body>
       </html>
     </ClerkProvider>

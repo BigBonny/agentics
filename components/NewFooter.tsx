@@ -1,186 +1,92 @@
-'use client'
-
-import { motion } from 'framer-motion'
-import { Sparkles, Mail, MapPin, Phone, Facebook, Twitter, Instagram, Linkedin, Crown, ArrowRight } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Sparkles, Mail, MapPin, ArrowRight } from 'lucide-react'
 
-const footerLinks = {
-  product: [
-    { name: 'Quiz Gratuit', href: '/quiz/guest' },
-    { name: 'Tarifs', href: '/pricing' },
-    { name: 'Cours', href: '/courses' },
-    { name: 'Tableau de Bord', href: '/dashboard' }
-  ],
-  company: [
-    { name: 'À Propos', href: '/' },
-    { name: 'Contact', href: 'mailto:contact@agentics.fr' }
-  ],
-  resources: [
-    { name: 'Mon Compte', href: '/account' },
-    { name: 'Tableau de Bord', href: '/dashboard' }
-  ],
-  social: [
-    { name: 'Facebook', icon: Facebook, href: 'https://facebook.com' },
-    { name: 'Twitter', icon: Twitter, href: 'https://twitter.com' },
-    { name: 'Instagram', icon: Instagram, href: 'https://instagram.com' },
-    { name: 'LinkedIn', icon: Linkedin, href: 'https://linkedin.com' }
-  ]
-}
+const columns = [
+  {
+    title: 'Produit',
+    links: [
+      { name: 'Quiz gratuit', href: '/quiz/guest' },
+      { name: 'Programme', href: '/subjects' },
+      { name: 'Cours', href: '/courses' },
+      { name: 'Tarifs', href: '/pricing' },
+      { name: 'Établissements', href: '/ecoles' },
+    ],
+  },
+  {
+    title: 'Mon espace',
+    links: [
+      { name: 'Tableau de bord', href: '/dashboard' },
+      { name: 'Mon compte', href: '/account' },
+      { name: 'Connexion', href: '/sign-in' },
+    ],
+  },
+]
+
+const linkClass =
+  'inline-flex min-h-[32px] items-center text-gray-400 transition-colors duration-200 hover:text-white'
 
 export default function NewFooter() {
-  const router = useRouter()
-
   return (
-    <footer className="bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950 text-white">
-      {/* Newsletter Section */}
-      <div className="border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h3 className="text-3xl font-bold mb-4">
-                Rejoignez <span className="gradient-text-gold">notre communauté</span>
-              </h3>
-              <p className="text-gray-400 text-lg">
-                Inscrivez-vous pour recevoir des conseils d'étude, des offres exclusives et des mises à jour sur nos nouvelles fonctionnalités.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <input
-                type="email"
-                placeholder="Votre adresse email"
-                className="flex-1 px-6 py-4 bg-gray-800 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-white placeholder-gray-500"
-              />
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => router.push('/pricing')}
-                className="btn-gold flex items-center justify-center gap-2 px-8"
-              >
-                <span>S'inscrire</span>
-                <ArrowRight className="h-5 w-5" />
-              </motion.button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Footer */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
-          {/* Brand */}
-          <div className="col-span-2 md:col-span-4 lg:col-span-1 mb-8 lg:mb-0">
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Sparkles className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-2xl font-bold">Agentics</span>
-            </div>
-            <p className="text-gray-400 mb-6 leading-relaxed">
-              La plateforme d'apprentissage alimentée par l'IA qui aide les étudiants à exceller dans leurs examens.
+    <footer className="bg-ink text-white">
+      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1.2fr]">
+          {/* Marque */}
+          <div className="sm:col-span-2 lg:col-span-1">
+            <Link href="/" className="inline-flex items-center gap-2.5 rounded-xl" aria-label="Agentics — accueil">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 shadow-[0_3px_0_#4c1d95]">
+                <Sparkles className="h-5 w-5 text-white" aria-hidden="true" />
+              </span>
+              <span className="font-display text-2xl font-extrabold tracking-tight">Agentics</span>
+            </Link>
+            <p className="mt-5 max-w-sm leading-relaxed text-gray-400">
+              Des quiz de révision alignés sur le programme de votre BTS.
             </p>
-            <div className="flex items-center gap-4">
-              {footerLinks.social.map((social) => (
-                <motion.a
-                  key={social.name}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-violet-600 transition-colors"
-                >
-                  <social.icon className="h-5 w-5" />
-                </motion.a>
-              ))}
-            </div>
+            <Link
+              href="/quiz/guest"
+              className="group mt-6 inline-flex items-center gap-2 font-semibold text-violet-300 transition-colors hover:text-white"
+            >
+              Commencer un quiz gratuit
+              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden="true" />
+            </Link>
           </div>
 
-          {/* Links */}
-          <div>
-            <h4 className="font-semibold text-lg mb-6">Produit</h4>
-            <ul className="space-y-3">
-              {footerLinks.product.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-gray-400 hover:text-violet-400 transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {columns.map((col) => (
+            <nav key={col.title} aria-label={col.title}>
+              <h2 className="font-sans text-sm font-bold uppercase tracking-wider text-gray-300">{col.title}</h2>
+              <ul className="mt-4 space-y-1.5">
+                {col.links.map((link) => (
+                  <li key={link.name}>
+                    <Link href={link.href} className={linkClass}>
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
 
           <div>
-            <h4 className="font-semibold text-lg mb-6">Entreprise</h4>
-            <ul className="space-y-3">
-              {footerLinks.company.map((link) => (
-                <li key={link.name}>
-                  <a
-                    href={link.href}
-                    className="text-gray-400 hover:text-violet-400 transition-colors"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-lg mb-6">Ressources</h4>
-            <ul className="space-y-3">
-              {footerLinks.resources.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-gray-400 hover:text-violet-400 transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-lg mb-6">Contact</h4>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-3 text-gray-400">
-                <Mail className="h-5 w-5 text-violet-400" />
-                <span>contact@agentics.fr</span>
+            <h2 className="font-sans text-sm font-bold uppercase tracking-wider text-gray-300">Contact</h2>
+            <ul className="mt-4 space-y-3 text-gray-400">
+              <li>
+                <a href="mailto:contact@agentics.fr" className={`${linkClass} gap-3`}>
+                  <Mail className="h-5 w-5 shrink-0 text-violet-400" aria-hidden="true" />
+                  contact@agentics.fr
+                </a>
               </li>
-              <li className="flex items-center gap-3 text-gray-400">
-                <Phone className="h-5 w-5 text-violet-400" />
-                <span>+33 1 23 45 67 89</span>
-              </li>
-              <li className="flex items-start gap-3 text-gray-400">
-                <MapPin className="h-5 w-5 text-violet-400 mt-0.5" />
-                <span>Paris, France</span>
+              <li className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 shrink-0 text-violet-400" aria-hidden="true" />
+                Paris, France
               </li>
             </ul>
           </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-500 text-sm">
-              © 2024 Agentics. Tous droits réservés.
-            </p>
-            <div className="flex items-center gap-6 text-sm">
-              <Link href="/pricing" className="text-gray-500 hover:text-violet-400 transition-colors">
-                Tarifs
-              </Link>
-              <Link href="/courses" className="text-gray-500 hover:text-violet-400 transition-colors">
-                Cours
-              </Link>
-            </div>
-          </div>
+      <div className="border-t border-white/10">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-gray-400 sm:flex-row sm:px-6">
+          <p>© {new Date().getFullYear()} Agentics. Tous droits réservés.</p>
+          
         </div>
       </div>
     </footer>

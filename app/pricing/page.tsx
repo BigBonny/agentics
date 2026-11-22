@@ -25,7 +25,7 @@ const plans = [
       { text: 'Suivi de progression', included: false },
       { text: 'Support prioritaire', included: false }
     ],
-    cta: 'Commencer Gratuitement',
+    cta: 'Commencer gratuitement',
     popular: false
   },
   {
@@ -46,9 +46,9 @@ const plans = [
       { text: 'Certifications et badges', included: true },
       { text: 'Accès à vie aux cours', included: true }
     ],
-    cta: 'Passer Premium',
+    cta: 'Passer à Premium',
     popular: true,
-    badge: 'Plus Populaire',
+    badge: 'Le plus choisi',
     savings: 'Économisez 38€'
   }
 ]
@@ -57,10 +57,6 @@ const faqs = [
   {
     question: 'Puis-je changer de forfait à tout moment ?',
     answer: 'Oui, vous pouvez passer à Premium ou revenir au forfait gratuit à tout moment. Aucun engagement.'
-  },
-  {
-    question: 'Comment fonctionne l\'essai gratuit ?',
-    answer: 'Vous avez accès à toutes les fonctionnalités Premium pendant 30 jours. Si vous n\'êtes pas satisfait, vous pouvez annuler sans frais.'
   },
   {
     question: 'Quels moyens de paiement acceptez-vous ?',
@@ -108,14 +104,12 @@ export default function Pricing() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-violet-50/30 to-white">
+    <div className="min-h-screen bg-paper">
       <NewHeader />
       
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-violet-200 rounded-full blur-3xl opacity-40" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-200 rounded-full blur-3xl opacity-40" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
@@ -124,9 +118,9 @@ export default function Pricing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-100 to-purple-100 rounded-full mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-violet-100 rounded-full mb-6">
               <Sparkles className="h-4 w-4 text-violet-600" />
-              <span className="text-violet-700 font-medium text-sm">30 jours d'essai gratuit</span>
+              <span className="text-violet-700 font-medium text-sm">Forfait Découverte gratuit</span>
             </div>
             
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
@@ -144,7 +138,7 @@ export default function Pricing() {
                 onClick={() => setBillingCycle('monthly')}
                 className={`px-6 py-3 rounded-full font-medium transition-all ${
                   billingCycle === 'monthly'
-                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md'
+                    ? 'bg-violet-600 text-white shadow-md'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -154,7 +148,7 @@ export default function Pricing() {
                 onClick={() => setBillingCycle('yearly')}
                 className={`px-6 py-3 rounded-full font-medium transition-all flex items-center gap-2 ${
                   billingCycle === 'yearly'
-                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md'
+                    ? 'bg-violet-600 text-white shadow-md'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -186,7 +180,7 @@ export default function Pricing() {
               >
                 {/* Popular Badge */}
                 {plan.popular && (
-                  <div className="absolute top-0 right-0 bg-gradient-to-r from-violet-600 to-purple-600 text-white px-6 py-2 rounded-bl-2xl font-semibold text-sm flex items-center gap-1">
+                  <div className="absolute top-0 right-0 bg-violet-600 text-white px-6 py-2 rounded-bl-2xl font-semibold text-sm flex items-center gap-1">
                     <Star className="h-4 w-4 fill-current" />
                     {plan.badge}
                   </div>
@@ -280,10 +274,6 @@ export default function Pricing() {
               <Clock className="h-5 w-5 text-violet-500" />
               <span>Annulation à tout moment</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-amber-500" />
-              <span>30 jours satisfait ou remboursé</span>
-            </div>
           </motion.div>
         </div>
       </section>
@@ -325,10 +315,8 @@ export default function Pricing() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 relative overflow-hidden">
+      <section className="py-24 bg-violet-600 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
@@ -338,7 +326,7 @@ export default function Pricing() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Prêt à Transformer Vos Résultats ?
+              Prêt à améliorer vos résultats ?
             </h2>
             <p className="text-white/80 text-xl mb-8 max-w-2xl mx-auto">
               Découvrez comment notre plateforme IA peut vous aider à améliorer vos résultats avec un apprentissage personnalisé.
@@ -350,7 +338,7 @@ export default function Pricing() {
               className="btn-gold inline-flex items-center gap-2 px-10 py-5 text-lg"
             >
               <Crown className="h-6 w-6" />
-              <span>Commencer Mon Essai Gratuit</span>
+              <span>Passer à Premium</span>
               <ArrowRight className="h-6 w-6" />
             </motion.button>
           </motion.div>

@@ -248,8 +248,7 @@ const CourseCard = ({ course, index, isPremium, chapterRef }: { course: Course; 
                 onClick={() => window.location.href = `/quiz?courseId=${course.id}`}
                 className={`
                   w-full py-3 px-4 rounded-xl font-semibold text-sm
-                  bg-gradient-to-r from-indigo-600 to-violet-600
-                  hover:from-indigo-500 hover:to-violet-500
+                  bg-violet-600
                   text-white shadow-lg shadow-indigo-500/25
                   flex items-center justify-center gap-2
                   transition-all duration-300
@@ -275,7 +274,7 @@ const CourseCard = ({ course, index, isPremium, chapterRef }: { course: Course; 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => window.location.href = '/pricing'}
-              className="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 transition-all duration-300"
+              className="w-full py-3 px-4 rounded-xl font-semibold text-sm bg-amber-500 text-white shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 transition-all duration-300"
             >
               <Lock className="w-4 h-4" />
               <span>Débloquer avec Premium</span>
@@ -297,7 +296,6 @@ const EmptyState = () => (
     className="col-span-full flex flex-col items-center justify-center py-20 px-4"
   >
     <div className="relative">
-      <div className="absolute inset-0 bg-indigo-100/20 blur-3xl rounded-full" />
       <div className="relative bg-white rounded-2xl p-8 md:p-12 max-w-2xl w-full shadow-lg border border-gray-200">
         <div className="flex flex-col items-center text-center">
           <motion.div 
@@ -442,7 +440,7 @@ export default function CoursesPage() {
   // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50">
+      <div className="min-h-screen bg-paper">
         <NewHeader />
         <div className="pt-32 pb-20 px-4">
           <div className="max-w-7xl mx-auto">
@@ -478,7 +476,7 @@ export default function CoursesPage() {
   // Error State
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50">
+      <div className="min-h-screen bg-paper">
         <NewHeader />
         <div className="pt-32 pb-20 px-4">
           <div className="max-w-7xl mx-auto">
@@ -496,7 +494,7 @@ export default function CoursesPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={fetchCourses}
-                className="px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-medium transition-colors"
+                className="px-6 py-3 bg-violet-600 text-white rounded-xl font-medium transition-colors"
               >
                 Réessayer
               </motion.button>
@@ -509,15 +507,13 @@ export default function CoursesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-paper">
       <NewHeader />
       
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-24 pb-12 px-4">
         {/* Animated Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-200 rounded-full blur-3xl opacity-30" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-200 rounded-full blur-3xl opacity-30" />
         </div>
         
         {/* Search & Filter Section */}
@@ -564,7 +560,7 @@ export default function CoursesPage() {
                 onClick={() => setSelectedSubject(null)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
                   selectedSubject === null 
-                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white' 
+                    ? 'bg-violet-600 text-white' 
                     : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                 }`}
               >
@@ -578,7 +574,7 @@ export default function CoursesPage() {
                   onClick={() => setSelectedSubject(subject === selectedSubject ? null : subject)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
                     selectedSubject === subject 
-                      ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white' 
+                      ? 'bg-violet-600 text-white' 
                       : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                   }`}
                 >

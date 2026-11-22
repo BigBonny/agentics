@@ -107,13 +107,11 @@ export default function SubjectsPage() {
   const isChapterExpanded = (id: string) => (q ? true : expandedChapters.has(id))
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-paper">
       <NewHeader />
 
       <div className="relative overflow-hidden pt-24 pb-12 px-4">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-200 rounded-full blur-3xl opacity-30" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-200 rounded-full blur-3xl opacity-30" />
         </div>
 
         <div className="relative max-w-5xl mx-auto">
@@ -182,7 +180,7 @@ export default function SubjectsPage() {
                   animate={{ opacity: 1, x: 0 }}
                   className="flex items-center mb-4"
                 >
-                  <span className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold px-3 py-1.5 rounded-xl mr-3">
+                  <span className="bg-violet-600 text-white text-sm font-semibold px-3 py-1.5 rounded-xl mr-3">
                     {group.code}
                   </span>
                   {group.label !== group.code && (

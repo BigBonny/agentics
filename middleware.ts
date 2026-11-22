@@ -7,6 +7,7 @@ export default authMiddleware({
     '/sign-up(.*)',
     '/api/webhooks(.*)',
     '/pricing',
+    '/ecoles',
     '/about',
     '/contact',
     '/favicon.ico',

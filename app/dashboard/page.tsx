@@ -110,9 +110,9 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-paper flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-violet-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+          <div className="w-16 h-16 bg-violet-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
             <Sparkles className="h-8 w-8 text-white animate-spin" />
           </div>
           <p className="text-gray-600">Chargement de votre espace...</p>
@@ -124,7 +124,7 @@ export default function Dashboard() {
   // Success State
   if (isSuccess && hasSubscription) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50">
+      <div className="min-h-screen bg-paper">
         <NewHeader />
         <div className="pt-32 pb-20 px-4">
           <motion.div
@@ -132,7 +132,7 @@ export default function Dashboard() {
             animate={{ opacity: 1, scale: 1 }}
             className="max-w-md mx-auto text-center"
           >
-            <div className="w-24 h-24 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+            <div className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
               <Crown className="h-12 w-12 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Bienvenue dans Premium!</h1>
@@ -155,7 +155,7 @@ export default function Dashboard() {
   // Free User - Upgrade Prompt
   if (!hasSubscription) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50">
+      <div className="min-h-screen bg-paper">
         <NewHeader />
         <div className="pt-32 pb-20 px-4">
           <div className="max-w-4xl mx-auto">
@@ -198,10 +198,9 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 rounded-3xl p-8 md:p-12 text-center relative overflow-hidden"
+              className="bg-violet-600 rounded-3xl p-8 md:p-12 text-center relative overflow-hidden"
             >
               <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute top-0 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
               </div>
               <div className="relative z-10">
                 <Crown className="h-16 w-16 text-amber-400 mx-auto mb-6" />
@@ -240,7 +239,7 @@ export default function Dashboard() {
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
                     feature.locked
                       ? 'bg-gray-100'
-                      : 'bg-gradient-to-r from-violet-500 to-purple-500'
+                      : 'bg-violet-600'
                   }`}>
                     <feature.icon className={`h-6 w-6 ${feature.locked ? 'text-gray-400' : 'text-white'}`} />
                   </div>
@@ -258,7 +257,7 @@ export default function Dashboard() {
 
   // Premium Dashboard
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-paper">
       <NewHeader />
 
       <div className="pt-28 pb-12 px-4 sm:px-6 lg:px-8">
@@ -290,7 +289,7 @@ export default function Dashboard() {
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
-              { icon: TrendingUp, label: 'Score Moyen', value: `${userStats.averageScore}%`, color: 'from-violet-500 to-purple-500' },
+              { icon: TrendingUp, label: 'Score moyen', value: `${userStats.averageScore}%`, color: 'from-violet-500 to-purple-500' },
               { icon: Clock, label: 'Temps d\'Étude', value: `${userStats.studyTime}h`, color: 'from-cyan-500 to-blue-500' },
               { icon: Award, label: 'Quizzes', value: userStats.totalQuizzes.toString(), color: 'from-amber-500 to-orange-500' },
               { icon: Flame, label: 'Série', value: `${userStats.streak} jours`, color: 'from-rose-500 to-pink-500' }
@@ -302,7 +301,7 @@ export default function Dashboard() {
                 transition={{ delay: i * 0.1 }}
                 className="card-glass p-6"
               >
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${stat.color} flex items-center justify-center mb-3`}>
+                <div className={`w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center mb-3`}>
                   <stat.icon className="h-5 w-5 text-white" />
                 </div>
                 <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
@@ -332,7 +331,7 @@ export default function Dashboard() {
                   {userStats.weeklyProgress.map((day, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center gap-2">
                       <div
-                        className="w-full bg-gradient-to-t from-violet-500 to-purple-500 rounded-t-lg transition-all duration-500 hover:from-violet-400 hover:to-purple-400"
+                        className="w-full bg-violet-600 rounded-t-lg transition-all duration-500"
                         style={{ height: `${day.score}%` }}
                       />
                       <span className="text-xs text-gray-600">{day.day}</span>
@@ -352,7 +351,7 @@ export default function Dashboard() {
                   onClick={() => router.push(userStats.weaknesses.length > 0 ? `/quiz/guest?focus=${userStats.weaknesses[0]}` : '/quiz/guest')}
                   className="card-premium p-6 hover:shadow-xl transition-all cursor-pointer group"
                 >
-                  <div className="w-12 h-12 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 bg-violet-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <Brain className="h-6 w-6 text-white" />
                   </div>
                   <h4 className="font-bold text-gray-900 mb-2">Quiz IA Adaptatif</h4>
@@ -371,7 +370,7 @@ export default function Dashboard() {
                   onClick={() => router.push('/courses')}
                   className="card-premium p-6 hover:shadow-xl transition-all cursor-pointer group"
                 >
-                  <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <Target className="h-6 w-6 text-white" />
                   </div>
                   <h4 className="font-bold text-gray-900 mb-2">Analyse des Faiblesses</h4>
@@ -548,13 +547,13 @@ export default function Dashboard() {
                       key={i}
                       className={`flex items-center gap-3 p-3 rounded-xl ${
                         achievement.unlocked
-                          ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-100'
+                          ? 'bg-amber-50 border border-amber-100'
                           : 'bg-gray-50 opacity-50'
                       }`}
                     >
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                         achievement.unlocked
-                          ? 'bg-gradient-to-r from-amber-400 to-yellow-500'
+                          ? 'bg-amber-500'
                           : 'bg-gray-200'
                       }`}>
                         <achievement.icon className={`h-5 w-5 ${achievement.unlocked ? 'text-white' : 'text-gray-400'}`} />
@@ -592,7 +591,7 @@ export default function Dashboard() {
                       key={day}
                       className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
                         day <= userStats.streak
-                          ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white'
+                          ? 'bg-rose-500 text-white'
                           : 'bg-gray-100 text-gray-400'
                       }`}
                     >
@@ -607,7 +606,7 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-2xl p-6 text-white"
+                className="bg-violet-600 rounded-2xl p-6 text-white"
               >
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="h-5 w-5 text-amber-300" />
