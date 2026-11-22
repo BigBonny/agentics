@@ -107,7 +107,18 @@
                             </field>
                         </page>
                         <page string="Micro-compétences" name="micro">
-                            <field name="micro_competence_ids"/>
+                            <field name="micro_competence_ids">
+                                <list decoration-success="statut_validation == 'valide'"
+                                      decoration-muted="statut_validation == 'rejete'">
+                                    <field name="name"/>
+                                    <field name="chapitre_id"/>
+                                    <field name="niveau"/>
+                                    <field name="statut_validation" widget="badge"
+                                           decoration-success="statut_validation == 'valide'"
+                                           decoration-danger="statut_validation == 'rejete'"
+                                           decoration-info="statut_validation == 'brouillon'"/>
+                                </list>
+                            </field>
                         </page>
                     </notebook>
                 </sheet>
@@ -178,7 +189,18 @@
                     </group>
                     <field name="description" placeholder="Contenu du chapitre / compétences visées (utilisé par l'IA)…"/>
                     <separator string="Micro-compétences"/>
-                    <field name="micro_competence_ids"/>
+                    <field name="micro_competence_ids">
+                        <list decoration-success="statut_validation == 'valide'"
+                              decoration-muted="statut_validation == 'rejete'">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                            <field name="niveau"/>
+                            <field name="statut_validation" widget="badge"
+                                   decoration-success="statut_validation == 'valide'"
+                                   decoration-danger="statut_validation == 'rejete'"
+                                   decoration-info="statut_validation == 'brouillon'"/>
+                        </list>
+                    </field>
                 </sheet>
             </form>
         </field>
