@@ -1,19 +1,28 @@
 /**
  * Extraction de contenu pédagogique depuis un fichier cours (PDF / TXT).
  *
- * Pipeline : buffer du fichier → texte brut (pdf-parse v2) → structuration LLM
- * (Groq llama-3.3-70b) → métadonnées du cours + lignes `course_content`
- * (chapitres). Sans clé Groq, découpe le texte en chapitres bruts pour que
- * le cours reste exploitable.
+ * Pipeline : buffer du fichier → texte brut (pdf-parse v1) → structuration LLM
+ * par blocs (Groq, voir lib/groq.ts) → métadonnées du cours + lignes
+ * `course_content` (sections). Le document entier est couvert : les blocs que
+ * le LLM ne peut pas traiter (pas de clé, quota, délai) sont découpés en
+ * sections brutes « Partie N » pour que le cours reste exploitable.
  */
 
-import { groqChat } from '@/lib/groq'
+import { groqChat, GROQ_MODEL_FALLBACKS } from '@/lib/groq'
 import { supabaseAdmin } from '@/lib/supabase'
 
-const MAX_TEXT_CHARS = 12_000 // ~3k tokens — le tier gratuit Groq plafonne à 8k TPM (input + max_tokens)
+// Un bloc LLM ≈ 10k caractères (~3k tokens) + 3500 tokens de sortie : tient dans
+// les 8k TPM du tier gratuit Groq. Le quota est PAR MODÈLE, donc chaque bloc
+// démarre sur un modèle différent de la chaîne de repli et ils partent en parallèle.
+const LLM_CHUNK_CHARS = 10_000
+const LLM_MAX_TOKENS = 3500
+// Au-delà, le reste du document passe en sections brutes (quota + maxDuration 60 s
+// des routes d'upload). À augmenter via l'env sur un tier Groq payant.
+const MAX_LLM_CHUNKS = Math.max(1, Number(process.env.EXTRACTION_MAX_LLM_CHUNKS) || 4)
+const LLM_TIME_BUDGET_MS = 40_000
 const CHUNK_TARGET_CHARS = 2_000
 
-interface StructuredChapter {
+export interface StructuredChapter {
   title: string
   type: 'lesson' | 'exercise' | 'video' | 'reading'
   duration_minutes?: number
@@ -33,6 +42,17 @@ interface StructuredCourse {
   chapters: StructuredChapter[]
 }
 
+export interface StructuredDocument {
+  /** Métadonnées du cours (issues du premier bloc) — null si le LLM n'a pas répondu. */
+  meta: Omit<StructuredCourse, 'chapters'> | null
+  chapters: StructuredChapter[]
+  /** Nombre de blocs structurés par le LLM / nombre total de blocs du document. */
+  llmChunks: number
+  totalChunks: number
+}
+
+type ChatFn = typeof groqChat
+
 /** Texte brut depuis un buffer PDF/TXT. */
 export async function extractText(buffer: Buffer, fileName: string, contentType: string): Promise<string> {
   if (contentType === 'text/plain' || fileName.toLowerCase().endsWith('.txt')) {
@@ -50,46 +70,69 @@ export async function extractText(buffer: Buffer, fileName: string, contentType:
   throw new Error(`Type de fichier non supporté : ${contentType} (${fileName})`)
 }
 
-/** Chapitres de secours quand aucun LLM n'est configuré : découpage propre du texte. */
-function fallbackChapters(text: string): StructuredChapter[] {
-  const clean = text.trim()
-  if (!clean) return []
+/**
+ * Découpe un texte en blocs d'environ `target` caractères, en coupant de
+ * préférence sur un saut de paragraphe, sinon sur une fin de phrase, dans la
+ * fenêtre [60 %..110 %] de la cible. Aucun caractère utile n'est perdu.
+ */
+export function splitText(text: string, target: number): string[] {
   const chunks: string[] = []
-  let rest = clean
-  while (rest.length > CHUNK_TARGET_CHARS) {
-    // coupe à la fin de phrase la plus proche dans la fenêtre [60%..110%] de la cible
-    const window = rest.slice(0, Math.floor(CHUNK_TARGET_CHARS * 1.1))
-    let cut = Math.max(
-      window.lastIndexOf('.\n'),
-      window.lastIndexOf('. '),
-      window.lastIndexOf('? '),
-      window.lastIndexOf('! ')
-    )
-    if (cut < CHUNK_TARGET_CHARS * 0.6) cut = CHUNK_TARGET_CHARS
-    else cut += 1
+  let rest = text.trim()
+  const min = target * 0.6
+  while (rest.length > target * 1.1) {
+    const window = rest.slice(0, Math.floor(target * 1.1))
+    let cut = window.lastIndexOf('\n\n')
+    if (cut < min) {
+      const sentenceEnd = Math.max(
+        window.lastIndexOf('.\n'),
+        window.lastIndexOf('. '),
+        window.lastIndexOf('? '),
+        window.lastIndexOf('! ')
+      )
+      cut = sentenceEnd < min ? target : sentenceEnd + 1
+    }
     chunks.push(rest.slice(0, cut).trim())
     rest = rest.slice(cut).trim()
   }
   if (rest) chunks.push(rest)
+  return chunks
+}
 
-  return chunks.map((content, i) => ({
-    title: `Partie ${i + 1}`,
+/** Sections de secours (sans LLM) : découpage propre du texte, titres attribués à l'assemblage. */
+function fallbackChapters(text: string): StructuredChapter[] {
+  return splitText(text, CHUNK_TARGET_CHARS).map((content) => ({
+    title: '',
     type: 'lesson' as const,
     duration_minutes: Math.max(2, Math.round(content.length / 900)),
     content,
   }))
 }
 
-/** Structure le texte avec Groq (llama-3.3-70b) — titre, métadonnées, chapitres. */
-async function structureWithLLM(text: string, hints: { title?: string }): Promise<StructuredCourse | null> {
-  if (!process.env.GROQ_API_KEY) return null
+const CHAPTER_SCHEMA = `{
+      "title": "titre de la section",
+      "type": "lesson",
+      "duration_minutes": 15,
+      "content": "contenu pédagogique fidèle au document, bien structuré en texte (pas de markdown HTML)"
+    }`
 
-  const prompt = `Tu transformes le contenu brut d'un document de cours en structure pédagogique JSON.
+const CHAPTER_RULES = `- Sections dans l'ordre du document ; type parmi lesson|exercise|reading (video uniquement si le document décrit une vidéo).
+- Le contenu de chaque section reprend les notions réelles du document — ne résume pas à une phrase.
+- Réponds en français sauf si le document est entièrement dans une autre langue.`
 
-${hints.title ? `Nom du fichier : ${hints.title}\n` : ''}
+function buildPrompt(chunk: string, index: number, total: number, hints: { title?: string }): string {
+  const fileLine = hints.title ? `Nom du fichier : ${hints.title}\n` : ''
+
+  if (index === 0) {
+    const partNote =
+      total > 1
+        ? `Ce texte est le DÉBUT d'un document plus long (partie 1/${total}) : les métadonnées décrivent le cours entier tel qu'on peut le déduire, les sections ne couvrent que ce texte.\n`
+        : ''
+    return `Tu transformes le contenu brut d'un document de cours en structure pédagogique JSON.
+
+${fileLine}${partNote}
 CONTENU :
 """
-${text.slice(0, MAX_TEXT_CHARS)}
+${chunk}
 """
 
 Réponds UNIQUEMENT avec un JSON valide de cette forme :
@@ -104,37 +147,123 @@ Réponds UNIQUEMENT avec un JSON valide de cette forme :
   "learning_objectives": ["objectif1", "objectif2"],
   "prerequisites": ["prérequis1"],
   "chapters": [
-    {
-      "title": "titre du chapitre",
-      "type": "lesson",
-      "duration_minutes": 15,
-      "content": "contenu pédagogique fidèle au document, bien structuré en texte (pas de markdown HTML)"
-    }
+    ${CHAPTER_SCHEMA}
   ]
 }
 
 Règles :
-- Chapitres dans l'ordre du document ; type parmi lesson|exercise|reading (video uniquement si le document décrit une vidéo).
-- Le contenu de chaque chapitre reprend les notions réelles du document — ne résume pas à une phrase.
-- level/difficulty entre 1 et 10. duration_hours réaliste (peut être décimal).
-- Réponds en français sauf si le document est entièrement dans une autre langue.`
+${CHAPTER_RULES}
+- level/difficulty entre 1 et 10. duration_hours réaliste pour le cours entier (peut être décimal).`
+  }
 
-  const completion = await groqChat({
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.2,
-    max_tokens: 3500,
-    response_format: { type: 'json_object' },
-  })
+  return `Tu transformes un extrait d'un document de cours en sections pédagogiques JSON.
 
-  const raw = completion.choices[0]?.message?.content
-  if (!raw) return null
+${fileLine}Ce texte est la partie ${index + 1}/${total} du document (la suite, pas le début).
 
+CONTENU :
+"""
+${chunk}
+"""
+
+Réponds UNIQUEMENT avec un JSON valide de cette forme :
+{
+  "chapters": [
+    ${CHAPTER_SCHEMA}
+  ]
+}
+
+Règles :
+${CHAPTER_RULES}
+- N'invente ni introduction ni conclusion : uniquement ce que contient cet extrait.
+- Si l'extrait commence au milieu d'une section, intitule-la d'après son contenu.`
+}
+
+/** Structure un bloc avec le LLM. Renvoie null sur toute erreur (quota, JSON invalide, délai). */
+async function structureChunk(
+  chat: ChatFn,
+  chunk: string,
+  index: number,
+  total: number,
+  hints: { title?: string },
+  deadline: number
+): Promise<StructuredCourse | null> {
+  const remaining = deadline - Date.now()
+  if (remaining <= 0) return null
+
+  let timer: ReturnType<typeof setTimeout> | undefined
   try {
+    const completion = await Promise.race([
+      chat({
+        messages: [{ role: 'user', content: buildPrompt(chunk, index, total, hints) }],
+        temperature: 0.2,
+        max_tokens: LLM_MAX_TOKENS,
+        response_format: { type: 'json_object' },
+        // Chaque bloc démarre sur un modèle différent (quota TPM par modèle) ;
+        // le premier bloc — métadonnées — garde le meilleur modèle.
+        model: GROQ_MODEL_FALLBACKS[index % GROQ_MODEL_FALLBACKS.length],
+      }),
+      new Promise<null>((resolve) => {
+        timer = setTimeout(() => resolve(null), remaining)
+      }),
+    ])
+    if (!completion) {
+      console.warn(`[extract] bloc ${index + 1}/${total} : délai LLM dépassé, sections brutes`)
+      return null
+    }
+
+    const raw = completion.choices[0]?.message?.content
+    if (!raw) return null
     const parsed = JSON.parse(raw) as StructuredCourse
     if (!Array.isArray(parsed.chapters)) return null
-    return parsed
-  } catch {
+    parsed.chapters = parsed.chapters.filter((ch) => ch && String(ch.content || '').trim())
+    return parsed.chapters.length ? parsed : null
+  } catch (error: any) {
+    console.warn(`[extract] bloc ${index + 1}/${total} : LLM en échec (${error?.message ?? error}), sections brutes`)
     return null
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
+
+/**
+ * Structure le document ENTIER : le texte est découpé en blocs, chacun structuré
+ * par le LLM en parallèle ; les blocs non traités retombent en sections brutes,
+ * à leur place dans l'ordre du document.
+ * `chat` est injectable pour les tests ; null = pas de LLM.
+ */
+export async function structureDocument(
+  text: string,
+  hints: { title?: string },
+  chat: ChatFn | null = process.env.GROQ_API_KEY ? groqChat : null
+): Promise<StructuredDocument> {
+  const chunks = splitText(text, LLM_CHUNK_CHARS)
+  const deadline = Date.now() + LLM_TIME_BUDGET_MS
+
+  const results = await Promise.all(
+    chunks.map((chunk, i) =>
+      chat && i < MAX_LLM_CHUNKS ? structureChunk(chat, chunk, i, chunks.length, hints, deadline) : null
+    )
+  )
+
+  const chapters: StructuredChapter[] = []
+  results.forEach((result, i) => {
+    chapters.push(...(result ? result.chapters : fallbackChapters(chunks[i])))
+  })
+  chapters.forEach((ch, i) => {
+    if (!String(ch.title || '').trim()) ch.title = `Partie ${i + 1}`
+  })
+
+  let meta: StructuredDocument['meta'] = null
+  if (results[0]) {
+    const { chapters: _ignored, ...rest } = results[0]
+    meta = rest
+  }
+
+  return {
+    meta,
+    chapters,
+    llmChunks: results.filter(Boolean).length,
+    totalChunks: chunks.length,
   }
 }
 
@@ -163,10 +292,9 @@ export async function extractCourseContent(
       return { status: 'failed', error: msg }
     }
 
-    const structured = await structureWithLLM(text, { title: fileName })
-    const chapters = structured?.chapters?.length
-      ? structured.chapters
-      : fallbackChapters(text)
+    const doc = await structureDocument(text, { title: fileName })
+    const structured = doc.meta
+    const chapters = doc.chapters
 
     // Métadonnées du cours : on n'écrase pas les valeurs déjà renseignées par l'admin
     const { data: course } = await supabaseAdmin
@@ -178,7 +306,9 @@ export async function extractCourseContent(
     const update: Record<string, unknown> = {
       ai_extracted_content: text,
       extraction_status: 'completed',
-      extraction_confidence: structured ? 0.9 : 0.5,
+      // 0.9 = tout le document structuré par le LLM, 0.7 = en partie, 0.5 = sections brutes
+      extraction_confidence:
+        doc.llmChunks === 0 ? 0.5 : doc.llmChunks === doc.totalChunks ? 0.9 : 0.7,
       updated_at: new Date().toISOString(),
     }
     const cleanFileName = fileName.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ')
@@ -188,10 +318,10 @@ export async function extractCourseContent(
       course.title === fileName ||
       course.title === cleanFileName
     if (structured) {
-      if (placeholderTitle) update.title = structured.title
-      if (!course?.description || course.description.startsWith('Cours basé sur'))
+      if (placeholderTitle && structured.title) update.title = structured.title
+      if ((!course?.description || course.description.startsWith('Cours basé sur')) && structured.description)
         update.description = structured.description
-      if (!course?.subject || ['general', 'général'].includes(course.subject.toLowerCase()))
+      if ((!course?.subject || ['general', 'général'].includes(course.subject.toLowerCase())) && structured.subject)
         update.subject = structured.subject
       if (!course?.topics?.length && structured.topics?.length) update.topics = structured.topics
       if (!course?.learning_objectives?.length && structured.learning_objectives?.length)
@@ -217,7 +347,10 @@ export async function extractCourseContent(
       if (error) console.error('[extract] insert course_content:', error.message)
     }
 
-    console.log(`[extract] cours ${courseId} : ${chapters.length} chapitres, ${text.length} caractères`)
+    console.log(
+      `[extract] cours ${courseId} : ${chapters.length} sections, ${text.length} caractères, ` +
+        `${doc.llmChunks}/${doc.totalChunks} blocs structurés par le LLM`
+    )
     return { status: 'completed' }
   } catch (error: any) {
     console.error('[extract] échec pour le cours', courseId, error)
