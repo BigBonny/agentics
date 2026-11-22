@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Jeu de données de test : BTS SIO, arborescence partielle. Les intitulés des
+     micro-compétences sont des exemples rédigés pour la démonstration. -->
+<odoo noupdate="1">
+
+    <record id="demo_diplome_bts_sio" model="formation.diplome">
+        <field name="name">BTS Services informatiques aux organisations (SIO)</field>
+        <field name="code_rncp">RNCP35185</field>
+        <field name="niveau_europeen">5</field>
+        <field name="certificateur">Ministère de l'Enseignement supérieur et de la Recherche</field>
+        <field name="source">manuel</field>
+        <field name="llm_call_quota">50</field>
+    </record>
+
+    <record id="demo_annee_1" model="formation.annee">
+        <field name="name">Année 1</field>
+        <field name="sequence">1</field>
+        <field name="diplome_id" ref="demo_diplome_bts_sio"/>
+    </record>
+    <record id="demo_annee_2" model="formation.annee">
+        <field name="name">Année 2</field>
+        <field name="sequence">2</field>
+        <field name="diplome_id" ref="demo_diplome_bts_sio"/>
+    </record>
+
+    <record id="demo_semestre_1" model="formation.semestre">
+        <field name="name">Semestre 1</field>
+        <field name="sequence">1</field>
+        <field name="annee_id" ref="demo_annee_1"/>
+    </record>
+    <record id="demo_semestre_2" model="formation.semestre">
+        <field name="name">Semestre 2</field>
+        <field name="sequence">2</field>
+        <field name="annee_id" ref="demo_annee_1"/>
+    </record>
+
+    <record id="demo_matiere_bloc1" model="formation.matiere">
+        <field name="name">Support et mise à disposition de services informatiques</field>
+        <field name="code_bloc">RNCP35185BC01</field>
+        <field name="semestre_id" ref="demo_semestre_1"/>
+        <field name="coefficient">4</field>
+        <field name="volume_horaire">120</field>
+        <field name="description">Gérer le patrimoine informatique. Répondre aux incidents et aux demandes d'assistance et d'évolution. Développer la présence en ligne de l'organisation. Travailler en mode projet. Mettre à disposition des utilisateurs un service informatique. Organiser son développement professionnel.</field>
+    </record>
+    <record id="demo_matiere_bloc3" model="formation.matiere">
+        <field name="name">Cybersécurité des services informatiques</field>
+        <field name="code_bloc">RNCP35185BC03</field>
+        <field name="semestre_id" ref="demo_semestre_2"/>
+        <field name="coefficient">4</field>
+        <field name="volume_horaire">100</field>
+        <field name="description">Protéger les données à caractère personnel. Préserver l'identité numérique de l'organisation. Sécuriser les équipements et les usages des utilisateurs. Garantir la disponibilité, l'intégrité et la confidentialité des services informatiques et des données de l'organisation face à des cyberattaques.</field>
+    </record>
+
+    <record id="demo_chapitre_patrimoine" model="formation.chapitre">
+        <field name="name">Gérer le patrimoine informatique</field>
+        <field name="ordre">1</field>
+        <field name="matiere_id" ref="demo_matiere_bloc1"/>
+    </record>
+    <record id="demo_chapitre_incidents" model="formation.chapitre">
+        <field name="name">Répondre aux incidents et aux demandes d'assistance</field>
+        <field name="ordre">2</field>
+        <field name="matiere_id" ref="demo_matiere_bloc1"/>
+    </record>
+    <record id="demo_chapitre_donnees_perso" model="formation.chapitre">
+        <field name="name">Protéger les données à caractère personnel</field>
+        <field name="ordre">1</field>
+        <field name="matiere_id" ref="demo_matiere_bloc3"/>
+    </record>
+
+    <record id="demo_mc_inventaire" model="formation.micro_competence">
+        <field name="name">Recenser les équipements d'un parc informatique dans un outil d'inventaire à partir d'un relevé fourni</field>
+        <field name="description">L'apprenant saisit ou importe les équipements, renseigne leurs caractéristiques et vérifie la cohérence de l'inventaire.</field>
+        <field name="niveau">debutant</field>
+        <field name="chapitre_id" ref="demo_chapitre_patrimoine"/>
+        <field name="statut_validation">valide</field>
+        <field name="generee_par_ia" eval="True"/>
+    </record>
+    <record id="demo_mc_sauvegarde" model="formation.micro_competence">
+        <field name="name">Vérifier la restauration d'une sauvegarde selon une procédure donnée</field>
+        <field name="description">L'apprenant restaure un jeu de données de test et contrôle son intégrité.</field>
+        <field name="niveau">intermediaire</field>
+        <field name="chapitre_id" ref="demo_chapitre_patrimoine"/>
+        <field name="statut_validation">brouillon</field>
+        <field name="generee_par_ia" eval="True"/>
+    </record>
+    <record id="demo_mc_ticket" model="formation.micro_competence">
+        <field name="name">Traiter un ticket d'incident de niveau 1 en respectant le délai de prise en charge convenu</field>
+        <field name="description">Qualification de l'incident, diagnostic, résolution ou escalade, et compte rendu à l'utilisateur.</field>
+        <field name="niveau">intermediaire</field>
+        <field name="chapitre_id" ref="demo_chapitre_incidents"/>
+        <field name="statut_validation">valide</field>
+    </record>
+    <record id="demo_mc_rgpd" model="formation.micro_competence">
+        <field name="name">Identifier les données à caractère personnel dans un traitement décrit par un cas d'entreprise</field>
+        <field name="description">L'apprenant distingue données personnelles, données sensibles et données non personnelles, et justifie son classement.</field>
+        <field name="niveau">debutant</field>
+        <field name="chapitre_id" ref="demo_chapitre_donnees_perso"/>
+        <field name="statut_validation">valide</field>
+    </record>
+
+    <record id="demo_eval_inventaire_qcm" model="formation.methode_evaluation">
+        <field name="micro_competence_id" ref="demo_mc_inventaire"/>
+        <field name="type">qcm</field>
+        <field name="critere_reussite">Au moins 8 bonnes réponses sur 10.</field>
+        <field name="duree_estimee">15</field>
+        <field name="ponderation">1</field>
+    </record>
+    <record id="demo_eval_inventaire_exo" model="formation.methode_evaluation">
+        <field name="micro_competence_id" ref="demo_mc_inventaire"/>
+        <field name="type">exercice</field>
+        <field name="critere_reussite">Inventaire complet et sans incohérence pour les 20 équipements fournis.</field>
+        <field name="duree_estimee">45</field>
+        <field name="ponderation">2</field>
+    </record>
+    <record id="demo_eval_ticket_cas" model="formation.methode_evaluation">
+        <field name="micro_competence_id" ref="demo_mc_ticket"/>
+        <field name="type">etude_cas</field>
+        <field name="critere_reussite">Incident correctement qualifié, résolu ou escaladé, compte rendu rédigé.</field>
+        <field name="duree_estimee">60</field>
+        <field name="ponderation">2</field>
+    </record>
+    <record id="demo_eval_rgpd_qcm" model="formation.methode_evaluation">
+        <field name="micro_competence_id" ref="demo_mc_rgpd"/>
+        <field name="type">qcm</field>
+        <field name="critere_reussite">Au moins 7 bonnes réponses sur 10.</field>
+        <field name="duree_estimee">15</field>
+        <field name="ponderation">1</field>
+    </record>
+
+    <record id="demo_tag_reglementation" model="formation.ressource.tag">
+        <field name="name">Réglementation</field>
+        <field name="color">2</field>
+    </record>
+    <record id="demo_tag_reference" model="formation.ressource.tag">
+        <field name="name">Référence officielle</field>
+        <field name="color">4</field>
+    </record>
+
+    <record id="demo_ressource_cnil" model="formation.ressource">
+        <field name="name">CNIL — Le RGPD, de quoi parle-t-on ?</field>
+        <field name="micro_competence_id" ref="demo_mc_rgpd"/>
+        <field name="type">lien</field>
+        <field name="url">https://www.cnil.fr/fr/rgpd-de-quoi-parle-t-on</field>
+        <field name="description">Présentation du RGPD par la CNIL.</field>
+        <field name="tag_ids" eval="[(6, 0, [ref('demo_tag_reglementation'), ref('demo_tag_reference')])]"/>
+    </record>
+
+</odoo>

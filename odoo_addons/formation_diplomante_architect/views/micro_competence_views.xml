@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="formation_micro_competence_list" model="ir.ui.view">
+        <field name="name">formation.micro_competence.list</field>
+        <field name="model">formation.micro_competence</field>
+        <field name="arch" type="xml">
+            <list string="Micro-compétences"
+                  decoration-success="statut_validation == 'valide'"
+                  decoration-muted="statut_validation == 'rejete'">
+                <header>
+                    <button name="action_valider" type="object" string="Valider" class="btn-primary"
+                            groups="formation_diplomante_architect.group_formation_architect_manager"/>
+                    <button name="action_rejeter" type="object" string="Rejeter"
+                            groups="formation_diplomante_architect.group_formation_architect_manager"/>
+                </header>
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="niveau"/>
+                <field name="chapitre_id"/>
+                <field name="matiere_id" optional="show"/>
+                <field name="diplome_id" optional="hide"/>
+                <field name="generee_par_ia" optional="hide"/>
+                <field name="statut_validation" widget="badge"
+                       decoration-success="statut_validation == 'valide'"
+                       decoration-danger="statut_validation == 'rejete'"
+                       decoration-info="statut_validation == 'brouillon'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="formation_micro_competence_form" model="ir.ui.view">
+        <field name="name">formation.micro_competence.form</field>
+        <field name="model">formation.micro_competence</field>
+        <field name="arch" type="xml">
+            <form string="Micro-compétence">
+                <header>
+                    <button name="action_valider" type="object" string="Valider" class="btn-primary"
+                            invisible="statut_validation == 'valide'"
+                            groups="formation_diplomante_architect.group_formation_architect_manager"/>
+                    <button name="action_rejeter" type="object" string="Rejeter"
+                            invisible="statut_validation == 'rejete'"
+                            groups="formation_diplomante_architect.group_formation_architect_manager"/>
+                    <button name="action_brouillon" type="object" string="Remettre en brouillon"
+                            invisible="statut_validation == 'brouillon'"
+                            groups="formation_diplomante_architect.group_formation_architect_manager"/>
+                    <field name="statut_validation" widget="statusbar" statusbar_visible="brouillon,valide"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h2><field name="name" placeholder="Ex. Configurer un routeur à partir d'un plan d'adressage fourni"/></h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="chapitre_id"/>
+                            <field name="matiere_id"/>
+                            <field name="diplome_id"/>
+                        </group>
+                        <group>
+                            <field name="niveau"/>
+                            <field name="generee_par_ia"/>
+                            <field name="valide_par_id" invisible="not valide_par_id"/>
+                            <field name="date_validation" invisible="not date_validation"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="Description, conditions de réalisation, critères observables…"/>
+                    <notebook>
+                        <page string="Méthodes d'évaluation" name="evaluation">
+                            <field name="methode_evaluation_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="type"/>
+                                    <field name="critere_reussite"/>
+                                    <field name="duree_estimee"/>
+                                    <field name="ponderation"/>
+                                    <button name="action_dupliquer" type="object" string="Dupliquer" icon="fa-copy"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Ressources documentaires" name="ressources">
+                            <field name="ressource_ids">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="type"/>
+                                    <field name="url" widget="url"/>
+                                    <field name="fichier_nom"/>
+                                    <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                                    <field name="statut_indexation" widget="badge"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="formation_micro_competence_search" model="ir.ui.view">
+        <field name="name">formation.micro_competence.search</field>
+        <field name="model">formation.micro_competence</field>
+        <field name="arch" type="xml">
+            <search string="Micro-compétences">
+                <field name="name"/>
+                <field name="chapitre_id"/>
+                <field name="matiere_id"/>
+                <field name="diplome_id"/>
+                <filter name="filter_brouillon" string="À valider" domain="[('statut_validation', '=', 'brouillon')]"/>
+                <filter name="filter_valide" string="Validées" domain="[('statut_validation', '=', 'valide')]"/>
+                <filter name="filter_rejete" string="Rejetées" domain="[('statut_validation', '=', 'rejete')]"/>
+                <separator/>
+                <filter name="filter_ia" string="Générées par IA" domain="[('generee_par_ia', '=', True)]"/>
+                <group>
+                    <filter name="group_diplome" string="Diplôme" context="{'group_by': 'diplome_id'}"/>
+                    <filter name="group_matiere" string="Matière" context="{'group_by': 'matiere_id'}"/>
+                    <filter name="group_chapitre" string="Chapitre" context="{'group_by': 'chapitre_id'}"/>
+                    <filter name="group_statut" string="Validation" context="{'group_by': 'statut_validation'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_formation_micro_competence" model="ir.actions.act_window">
+        <field name="name">Micro-compétences</field>
+        <field name="res_model">formation.micro_competence</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_filter_brouillon': 1}</field>
+    </record>
+
+</odoo>

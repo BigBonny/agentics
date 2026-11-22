@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="formation_import_blocs_wizard_form" model="ir.ui.view">
+        <field name="name">formation.import.blocs.wizard.form</field>
+        <field name="model">formation.import.blocs.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Saisir les blocs de compétences">
+                <group>
+                    <field name="diplome_id" readonly="1"/>
+                    <field name="semestre_id"/>
+                </group>
+                <p class="text-muted">
+                    Un bloc par ligne. Formats acceptés : « Intitulé », « CODE | Intitulé »
+                    ou « CODE | Intitulé | Description ». Chaque bloc devient une matière.
+                </p>
+                <field name="blocs_text" nolabel="1"
+                       placeholder="RNCP35185BC01 | Support et mise à disposition de services informatiques"/>
+                <footer>
+                    <button name="action_import" type="object" string="Importer" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_formation_import_blocs_wizard" model="ir.actions.act_window">
+        <field name="name">Saisir les blocs manuellement</field>
+        <field name="res_model">formation.import.blocs.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

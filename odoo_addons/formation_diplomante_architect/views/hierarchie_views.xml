@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Année -->
+    <record id="formation_annee_form" model="ir.ui.view">
+        <field name="name">formation.annee.form</field>
+        <field name="model">formation.annee</field>
+        <field name="arch" type="xml">
+            <form string="Année">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="diplome_id"/>
+                        <field name="sequence"/>
+                    </group>
+                    <field name="semestre_ids">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Semestre -->
+    <record id="formation_semestre_form" model="ir.ui.view">
+        <field name="name">formation.semestre.form</field>
+        <field name="model">formation.semestre</field>
+        <field name="arch" type="xml">
+            <form string="Semestre">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="annee_id"/>
+                        <field name="diplome_id"/>
+                    </group>
+                    <field name="matiere_ids">
+                        <list>
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                            <field name="coefficient"/>
+                            <field name="volume_horaire"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Matière -->
+    <record id="formation_matiere_list" model="ir.ui.view">
+        <field name="name">formation.matiere.list</field>
+        <field name="model">formation.matiere</field>
+        <field name="arch" type="xml">
+            <list string="Matières">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code_bloc" optional="show"/>
+                <field name="diplome_id"/>
+                <field name="semestre_id"/>
+                <field name="coefficient"/>
+                <field name="volume_horaire"/>
+                <field name="micro_competence_count" string="Micro-compétences"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="formation_matiere_form" model="ir.ui.view">
+        <field name="name">formation.matiere.form</field>
+        <field name="model">formation.matiere</field>
+        <field name="arch" type="xml">
+            <form string="Matière">
+                <header>
+                    <button name="action_generer_micro_competences" type="object"
+                            string="Générer les micro-compétences" class="btn-primary" icon="fa-magic"
+                            confirm="L'IA va découper ce bloc en micro-compétences (brouillons à valider). Continuer ?"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h2><field name="name"/></h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="semestre_id"/>
+                            <field name="diplome_id"/>
+                            <field name="code_bloc"/>
+                        </group>
+                        <group>
+                            <field name="coefficient"/>
+                            <field name="volume_horaire"/>
+                            <field name="micro_competence_count" string="Micro-compétences"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Bloc de compétences" name="bloc">
+                            <field name="description" placeholder="Texte officiel du bloc de compétences (référentiel)…"/>
+                        </page>
+                        <page string="Chapitres" name="chapitres">
+                            <field name="chapitre_ids">
+                                <list editable="bottom">
+                                    <field name="ordre" widget="handle"/>
+                                    <field name="name"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Micro-compétences" name="micro">
+                            <field name="micro_competence_ids"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="formation_matiere_search" model="ir.ui.view">
+        <field name="name">formation.matiere.search</field>
+        <field name="model">formation.matiere</field>
+        <field name="arch" type="xml">
+            <search string="Matières">
+                <field name="name"/>
+                <field name="code_bloc"/>
+                <field name="diplome_id"/>
+                <group>
+                    <filter name="group_diplome" string="Diplôme" context="{'group_by': 'diplome_id'}"/>
+                    <filter name="group_semestre" string="Semestre" context="{'group_by': 'semestre_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_formation_matiere" model="ir.actions.act_window">
+        <field name="name">Matières</field>
+        <field name="res_model">formation.matiere</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_group_diplome': 1}</field>
+    </record>
+
+    <!-- Chapitre -->
+    <record id="formation_chapitre_list" model="ir.ui.view">
+        <field name="name">formation.chapitre.list</field>
+        <field name="model">formation.chapitre</field>
+        <field name="arch" type="xml">
+            <list string="Chapitres">
+                <field name="ordre" widget="handle"/>
+                <field name="name"/>
+                <field name="matiere_id"/>
+                <field name="diplome_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="formation_chapitre_form" model="ir.ui.view">
+        <field name="name">formation.chapitre.form</field>
+        <field name="model">formation.chapitre</field>
+        <field name="arch" type="xml">
+            <form string="Chapitre">
+                <header>
+                    <button name="action_generer_micro_competences" type="object"
+                            string="Générer les micro-compétences" class="btn-primary" icon="fa-magic"
+                            confirm="L'IA va découper ce chapitre en micro-compétences (brouillons à valider). Continuer ?"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h2><field name="name"/></h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="matiere_id"/>
+                            <field name="diplome_id"/>
+                        </group>
+                        <group>
+                            <field name="ordre"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="Contenu du chapitre / compétences visées (utilisé par l'IA)…"/>
+                    <separator string="Micro-compétences"/>
+                    <field name="micro_competence_ids"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_formation_chapitre" model="ir.actions.act_window">
+        <field name="name">Chapitres</field>
+        <field name="res_model">formation.chapitre</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

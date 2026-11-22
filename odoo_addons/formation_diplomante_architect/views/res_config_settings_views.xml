@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form_formation_architect" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.formation.architect</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Formation Architect" string="Formation Architect"
+                     name="formation_diplomante_architect">
+                    <block title="Assistant IA (découpage en micro-compétences)" name="fda_llm">
+                        <setting string="Fournisseur LLM"
+                                 help="Service utilisé par le bouton « Générer les micro-compétences ».">
+                            <field name="fda_llm_provider"/>
+                            <div class="mt8">
+                                <label for="fda_llm_model"/>
+                                <field name="fda_llm_model" placeholder="Modèle économique par défaut"/>
+                            </div>
+                        </setting>
+                        <setting string="Clé API LLM" help="Stockée dans les paramètres système d'Odoo.">
+                            <field name="fda_llm_api_key" password="True"/>
+                        </setting>
+                        <setting string="Quota d'appels IA par diplôme"
+                                 help="Valeur par défaut des nouveaux diplômes. 0 = pas de limite.">
+                            <field name="fda_llm_quota_defaut"/>
+                        </setting>
+                    </block>
+                    <block title="Référentiel RNCP / France Compétences" name="fda_rncp">
+                        <setting string="Endpoint de l'API RNCP"
+                                 help="Utilisez {code} à l'endroit du code RNCP. Sans endpoint, les blocs se saisissent manuellement.">
+                            <field name="fda_rncp_endpoint" placeholder="https://…/{code}"/>
+                        </setting>
+                        <setting string="Clé API RNCP" help="Envoyée en « Authorization: Bearer » si renseignée.">
+                            <field name="fda_rncp_api_key" password="True"/>
+                        </setting>
+                    </block>
+                    <block title="Qualisoft (API REST sortante)" name="fda_qualisoft">
+                        <setting string="Clé API Qualisoft"
+                                 help="Jeton exigé pour lire /api/v1/… Sans clé, l'API est désactivée.">
+                            <field name="fda_qualisoft_api_key" password="True"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_formation_architect_settings" model="ir.actions.act_window">
+        <field name="name">Paramètres</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'formation_diplomante_architect'}</field>
+    </record>
+
+</odoo>

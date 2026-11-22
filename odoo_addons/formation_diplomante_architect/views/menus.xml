@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_formation_architect_root" name="Formations diplômantes" sequence="60"
+              groups="group_formation_architect_user"/>
+
+    <menuitem id="menu_formation_diplome" name="Diplômes" sequence="10"
+              parent="menu_formation_architect_root" action="action_formation_diplome"/>
+
+    <menuitem id="menu_formation_structure" name="Structure" sequence="20"
+              parent="menu_formation_architect_root"/>
+    <menuitem id="menu_formation_matiere" name="Matières" sequence="10"
+              parent="menu_formation_structure" action="action_formation_matiere"/>
+    <menuitem id="menu_formation_chapitre" name="Chapitres" sequence="20"
+              parent="menu_formation_structure" action="action_formation_chapitre"/>
+
+    <menuitem id="menu_formation_micro_competence" name="Micro-compétences" sequence="30"
+              parent="menu_formation_architect_root" action="action_formation_micro_competence"/>
+
+    <menuitem id="menu_formation_ressource" name="Ressources" sequence="40"
+              parent="menu_formation_architect_root" action="action_formation_ressource"/>
+
+    <menuitem id="menu_formation_config" name="Configuration" sequence="90"
+              parent="menu_formation_architect_root" groups="group_formation_architect_manager"/>
+    <menuitem id="menu_formation_ressource_tag" name="Tags de ressources" sequence="10"
+              parent="menu_formation_config" action="action_formation_ressource_tag"/>
+    <menuitem id="menu_formation_settings" name="Paramètres" sequence="20"
+              parent="menu_formation_config" action="action_formation_architect_settings"
+              groups="base.group_system"/>
+
+</odoo>

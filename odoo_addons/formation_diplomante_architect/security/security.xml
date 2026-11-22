@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="module_category_formation_architect" model="ir.module.category">
+        <field name="name">Formation Architect</field>
+        <field name="sequence">60</field>
+    </record>
+
+    <record id="privilege_formation_architect" model="res.groups.privilege">
+        <field name="name">Formation Architect</field>
+        <field name="category_id" ref="module_category_formation_architect"/>
+    </record>
+
+    <record id="group_formation_architect_user" model="res.groups">
+        <field name="name">Utilisateur</field>
+        <field name="privilege_id" ref="privilege_formation_architect"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        <field name="comment">Peut créer et modifier des diplômes et lancer l'assistant IA.</field>
+    </record>
+
+    <record id="group_formation_architect_manager" model="res.groups">
+        <field name="name">Responsable</field>
+        <field name="privilege_id" ref="privilege_formation_architect"/>
+        <field name="implied_ids" eval="[(4, ref('group_formation_architect_user'))]"/>
+        <field name="comment">Peut valider les micro-compétences et configurer les clés API.</field>
+    </record>
+
+    <!-- Les administrateurs sont responsables d'office (ils gèrent les paramètres). -->
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_formation_architect_manager'))]"/>
+    </record>
+
+    <!-- Multi-société : chacun ne voit que les diplômes de ses sociétés -->
+    <record id="rule_formation_diplome_company" model="ir.rule">
+        <field name="name">Diplôme : multi-société</field>
+        <field name="model_id" ref="model_formation_diplome"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_formation_annee_company" model="ir.rule">
+        <field name="name">Année : multi-société</field>
+        <field name="model_id" ref="model_formation_annee"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_formation_semestre_company" model="ir.rule">
+        <field name="name">Semestre : multi-société</field>
+        <field name="model_id" ref="model_formation_semestre"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_formation_matiere_company" model="ir.rule">
+        <field name="name">Matière : multi-société</field>
+        <field name="model_id" ref="model_formation_matiere"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_formation_chapitre_company" model="ir.rule">
+        <field name="name">Chapitre : multi-société</field>
+        <field name="model_id" ref="model_formation_chapitre"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_formation_micro_competence_company" model="ir.rule">
+        <field name="name">Micro-compétence : multi-société</field>
+        <field name="model_id" ref="model_formation_micro_competence"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_formation_methode_evaluation_company" model="ir.rule">
+        <field name="name">Méthode d'évaluation : multi-société</field>
+        <field name="model_id" ref="model_formation_methode_evaluation"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="rule_formation_ressource_company" model="ir.rule">
+        <field name="name">Ressource : multi-société</field>
+        <field name="model_id" ref="model_formation_ressource"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+
+</odoo>

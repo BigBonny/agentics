@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="formation_ressource_list" model="ir.ui.view">
+        <field name="name">formation.ressource.list</field>
+        <field name="model">formation.ressource</field>
+        <field name="arch" type="xml">
+            <list string="Ressources documentaires">
+                <header>
+                    <button name="action_marquer_indexe" type="object" string="Marquer indexé"/>
+                    <button name="action_marquer_non_indexe" type="object" string="Marquer à réindexer"/>
+                </header>
+                <field name="name"/>
+                <field name="type"/>
+                <field name="micro_competence_id"/>
+                <field name="diplome_id" optional="show"/>
+                <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                <field name="statut_indexation" widget="badge"
+                       decoration-success="statut_indexation == 'indexe'"
+                       decoration-warning="statut_indexation == 'non_indexe'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="formation_ressource_form" model="ir.ui.view">
+        <field name="name">formation.ressource.form</field>
+        <field name="model">formation.ressource</field>
+        <field name="arch" type="xml">
+            <form string="Ressource documentaire">
+                <header>
+                    <button name="action_marquer_indexe" type="object" string="Marquer indexé"
+                            invisible="statut_indexation == 'indexe'"/>
+                    <button name="action_marquer_non_indexe" type="object" string="Marquer à réindexer"
+                            invisible="statut_indexation == 'non_indexe'"/>
+                    <field name="statut_indexation" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h2><field name="name"/></h2>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="micro_competence_id"/>
+                            <field name="type"/>
+                            <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                        </group>
+                        <group>
+                            <field name="fichier" filename="fichier_nom" invisible="type != 'document'"/>
+                            <field name="fichier_nom" invisible="1"/>
+                            <field name="url" widget="url" placeholder="https://…"
+                                   required="type == 'lien'"/>
+                            <field name="date_indexation" invisible="not date_indexation"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="Description de la ressource…"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="formation_ressource_search" model="ir.ui.view">
+        <field name="name">formation.ressource.search</field>
+        <field name="model">formation.ressource</field>
+        <field name="arch" type="xml">
+            <search string="Ressources">
+                <field name="name"/>
+                <field name="micro_competence_id"/>
+                <field name="diplome_id"/>
+                <field name="tag_ids"/>
+                <filter name="filter_non_indexe" string="Non indexées" domain="[('statut_indexation', '=', 'non_indexe')]"/>
+                <filter name="filter_indexe" string="Indexées" domain="[('statut_indexation', '=', 'indexe')]"/>
+                <group>
+                    <filter name="group_type" string="Type" context="{'group_by': 'type'}"/>
+                    <filter name="group_diplome" string="Diplôme" context="{'group_by': 'diplome_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_formation_ressource" model="ir.actions.act_window">
+        <field name="name">Ressources documentaires</field>
+        <field name="res_model">formation.ressource</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="formation_ressource_tag_list" model="ir.ui.view">
+        <field name="name">formation.ressource.tag.list</field>
+        <field name="model">formation.ressource.tag</field>
+        <field name="arch" type="xml">
+            <list string="Tags" editable="bottom">
+                <field name="name"/>
+                <field name="color" widget="color_picker"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_formation_ressource_tag" model="ir.actions.act_window">
+        <field name="name">Tags de ressources</field>
+        <field name="res_model">formation.ressource.tag</field>
+        <field name="view_mode">list</field>
+    </record>
+
+</odoo>
