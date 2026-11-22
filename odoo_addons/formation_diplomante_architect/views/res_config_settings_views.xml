@@ -50,7 +50,6 @@
         <field name="name">Paramètres</field>
         <field name="res_model">res.config.settings</field>
         <field name="view_mode">form</field>
-        <field name="target">inline</field>
         <field name="context">{'module': 'formation_diplomante_architect'}</field>
     </record>
 

@@ -55,7 +55,7 @@
                 <field name="course_title"/>
                 <filter name="this_month" string="Ce mois"
                         domain="[('completed_at', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d'))]"/>
-                <group expand="0" string="Regrouper par">
+                <group>
                     <filter name="group_partner" string="Apprenant" context="{'group_by': 'partner_id'}"/>
                     <filter name="group_formation" string="Formation" context="{'group_by': 'formation_code'}"/>
                     <filter name="group_month" string="Mois" context="{'group_by': 'completed_at:month'}"/>

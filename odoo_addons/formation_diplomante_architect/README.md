@@ -14,7 +14,8 @@ remédiation (agents) sont hors périmètre.
 |---|---|
 | Syntaxe Python et XML | vérifiée |
 | Fonctions de lecture des réponses IA / RNCP (`utils/parsing.py`) | testées hors Odoo (`python tests/test_parsing.py`) |
-| Installation et tests sur une instance Odoo 19.0 | **à faire** (`tests/test_formation.py` est prêt) |
+| Installation sur Odoo 19.0 (instance locale, base vierge + données de démo) | faite — 10 tests `tests/test_formation.py` réussis, écrans et API REST vérifiés |
+| Appel réel à un fournisseur LLM | **non testé** (aucune clé) — les tests simulent la réponse |
 | Odoo 20.0 | **non testé** — voir « Compatibilité » |
 | Import RNCP contre une vraie API | **non testé** — le format dépend de l'API retenue |
 
