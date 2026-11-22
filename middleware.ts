@@ -32,6 +32,8 @@ export default authMiddleware({
     '/api/webhooks/stripe',
     '/api/stripe/webhook',
     '/api/webhooks/clerk',
+    // Cron Vercel quotidien (évite la mise en pause de Supabase) — aucune donnée renvoyée
+    '/api/keep-alive',
     '/_next/static/(.*)',
     '/_next/image(.*)',
     '/_next/css/(.*)',
